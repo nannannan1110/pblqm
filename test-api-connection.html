@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API连接测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .success {
+            color: #67c23a;
+            font-weight: bold;
+        }
+        .error {
+            color: #f56c6c;
+            font-weight: bold;
+        }
+        .info {
+            color: #409eff;
+        }
+        pre {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        button {
+            background: #409eff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #66b1ff;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔌 API连接测试工具</h1>
+
+    <div class="test-section">
+        <h2>测试1: 后端服务可用性</h2>
+        <button onclick="testBackendConnection()">测试后端连接</button>
+        <div id="backend-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>测试2: 菜谱API</h2>
+        <button onclick="testRecipeAPI()">测试菜谱API</button>
+        <div id="recipe-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>测试3: 评论统计API</h2>
+        <button onclick="testCommentStatsAPI()">测试评论统计API</button>
+        <div id="stats-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>测试4: 评论列表API</h2>
+        <button onclick="testCommentsAPI()">测试评论列表API</button>
+        <div id="comments-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>测试5: CORS预检</h2>
+        <button onclick="testCORS()">测试CORS</button>
+        <div id="cors-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>完整测试报告</h2>
+        <button onclick="runAllTests()">🚀 运行所有测试</button>
+        <div id="all-tests-result"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+
+        function log(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            const className = type === 'success' ? 'success' : type === 'error' ? 'error' : 'info';
+            element.innerHTML += `<div class="${className}">${message}</div>`;
+        }
+
+        function clear(elementId) {
+            document.getElementById(elementId).innerHTML = '';
+        }
+
+        async function testBackendConnection() {
+            clear('backend-result');
+            log('backend-result', '正在测试后端连接...', 'info');
+
+            try {
+                const response = await fetch(API_BASE + '/recipes/1');
+                if (response.ok) {
+                    log('backend-result', '✅ 后端服务正常运行', 'success');
+                } else {
+                    log('backend-result', `❌ 后端响应异常: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                log('backend-result', `❌ 连接失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function testRecipeAPI() {
+            clear('recipe-result');
+            log('recipe-result', '正在测试菜谱API...', 'info');
+
+            try {
+                const response = await fetch(API_BASE + '/recipes/1');
+                const data = await response.json();
+
+                if (response.ok) {
+                    log('recipe-result', `✅ 菜谱API正常`, 'success');
+                    log('recipe-result', `<pre>标题: ${data.title}\n描述: ${data.description}</pre>`, 'info');
+                } else {
+                    log('recipe-result', `❌ API错误: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                log('recipe-result', `❌ 请求失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function testCommentStatsAPI() {
+            clear('stats-result');
+            log('stats-result', '正在测试评论统计API...', 'info');
+
+            try {
+                const response = await fetch(API_BASE + '/comments/recipe/1/stats');
+                const data = await response.json();
+
+                if (response.ok) {
+                    log('stats-result', `✅ 评论统计API正常`, 'success');
+                    log('stats-result', `总评论数: ${data.total_comments}, 平均评分: ${data.average_rating}`, 'info');
+                } else {
+                    log('stats-result', `❌ API错误: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                log('stats-result', `❌ 请求失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function testCommentsAPI() {
+            clear('comments-result');
+            log('comments-result', '正在测试评论列表API...', 'info');
+
+            try {
+                const response = await fetch(API_BASE + '/comments/recipe/1');
+                const data = await response.json();
+
+                if (response.ok) {
+                    log('comments-result', `✅ 评论列表API正常`, 'success');
+                    log('comments-result', `返回 ${data.comments.length} 条评论，总共 ${data.total} 条`, 'info');
+
+                    if (data.comments.length > 0) {
+                        log('comments-result', `<br><strong>第一条评论:</strong><br>${data.comments[0].content.substring(0, 50)}...`, 'info');
+                    }
+                } else {
+                    log('comments-result', `❌ API错误: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                log('comments-result', `❌ 请求失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function testCORS() {
+            clear('cors-result');
+            log('cors-result', '正在测试CORS配置...', 'info');
+
+            try {
+                const response = await fetch(API_BASE + '/recipes/1', {
+                    method: 'OPTIONS'
+                });
+
+                const corsHeaders = response.headers;
+                log('cors-result', '✅ CORS预检请求成功', 'success');
+
+                const allowOrigin = corsHeaders.get('Access-Control-Allow-Origin');
+                const allowMethods = corsHeaders.get('Access-Control-Allow-Methods');
+
+                if (allowOrigin) {
+                    log('cors-result', `允许的来源: ${allowOrigin}`, 'info');
+                }
+                if (allowMethods) {
+                    log('cors-result', `允许的方法: ${allowMethods}`, 'info');
+                }
+            } catch (error) {
+                log('cors-result', `❌ CORS测试失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function runAllTests() {
+            clear('all-tests-result');
+            log('all-tests-result', '<h3>🚀 开始运行所有测试...</h3>', 'info');
+
+            await testBackendConnection();
+            await testRecipeAPI();
+            await testCommentStatsAPI();
+            await testCommentsAPI();
+            await testCORS();
+
+            log('all-tests-result', '<h3>✅ 所有测试完成！</h3>', 'success');
+        }
+
+        // 页面加载时自动运行所有测试
+        window.onload = () => {
+            console.log('页面加载完成，准备运行测试...');
+            setTimeout(runAllTests, 500);
+        };
+    </script>
+</body>
+</html>

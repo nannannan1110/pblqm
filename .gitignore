@@ -1,0 +1,41 @@
+# 依赖
+node_modules/
+__pycache__/
+*.pyc
+venv/
+env/
+nodejs/
+
+# 环境配置
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 日志
+*.log
+logs/
+
+# 上传文件
+uploads/
+
+# 构建输出
+dist/
+build/
+
+# 数据库
+*.db
+*.sqlite
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 敏感文件（包含个人访问令牌）
+push.bat
+.git-credentials

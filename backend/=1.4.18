@@ -1,0 +1,53 @@
+Collecting Flask==2.2.0
+  Using cached Flask-2.2.0-py3-none-any.whl.metadata (3.9 kB)
+Collecting Flask-SQLAlchemy==3.0.0
+  Using cached Flask_SQLAlchemy-3.0.0-py3-none-any.whl.metadata (3.4 kB)
+Collecting Flask-Migrate==4.0.0
+  Using cached Flask_Migrate-4.0.0-py3-none-any.whl.metadata (3.1 kB)
+Collecting Flask-JWT-Extended==4.4.0
+  Using cached Flask_JWT_Extended-4.4.0-py2.py3-none-any.whl.metadata (3.7 kB)
+Collecting Flask-CORS==3.0.10
+  Using cached Flask_Cors-3.0.10-py2.py3-none-any.whl.metadata (5.4 kB)
+Collecting Flask-Limiter==3.2.0
+  Using cached Flask_Limiter-3.2.0-py3-none-any.whl.metadata (6.3 kB)
+Requirement already satisfied: SQLAlchemy in c:\users\86135\appdata\local\programs\python\python38\lib\site-packages (2.0.45)
+Collecting PyMySQL==1.0.0
+  Using cached PyMySQL-1.0.0-py3-none-any.whl.metadata (5.3 kB)
+Collecting redis==4.3.0
+  Using cached redis-4.3.0-py3-none-any.whl.metadata (51 kB)
+Collecting python-dotenv==0.19.0
+  Using cached python_dotenv-0.19.0-py2.py3-none-any.whl.metadata (18 kB)
+Collecting marshmallow==3.17.0
+  Using cached marshmallow-3.17.0-py3-none-any.whl.metadata (7.8 kB)
+Collecting Pillow==9.0.0
+  Using cached Pillow-9.0.0-cp38-cp38-win_amd64.whl.metadata (7.6 kB)
+Collecting pytest==7.0.0
+  Using cached pytest-7.0.0-py3-none-any.whl.metadata (7.8 kB)
+Collecting coverage==6.0.0
+  Using cached coverage-6.0-cp38-cp38-win_amd64.whl.metadata (7.8 kB)
+Collecting gunicorn==20.1.0
+  Using cached gunicorn-20.1.0-py3-none-any.whl.metadata (3.8 kB)
+Requirement already satisfied: Werkzeug>=2.2.0 in c:\users\86135\appdata\local\programs\python\python38\lib\site-packages (from Flask==2.2.0) (3.0.6)
+Requirement already satisfied: Jinja2>=3.0 in c:\users\86135\appdata\local\programs\python\python38\lib\site-packages (from Flask==2.2.0) (3.1.6)
+Requirement already satisfied: itsdangerous>=2.0 in c:\users\86135\appdata\local\programs\python\python38\lib\site-packages (from Flask==2.2.0) (2.2.0)
+Requirement already satisfied: click>=8.0 in c:\users\86135\appdata\local\programs\python\python38\lib\site-packages (from Flask==2.2.0) (8.1.8)
+Requirement already satisfied: importlib-metadata>=3.6.0 in c:\users\86135\appdata\local\programs\python\python38\lib\site-packages (from Flask==2.2.0) (8.5.0)
+Collecting alembic>=0.7 (from Flask-Migrate==4.0.0)
+  Downloading alembic-1.14.1-py3-none-any.whl.metadata (7.4 kB)
+Requirement already satisfied: PyJWT<3.0,>=2.0 in c:\users\86135\appdata\local\programs\python\python38\lib\site-packages (from Flask-JWT-Extended==4.4.0) (2.9.0)
+Requirement already satisfied: Six in c:\users\86135\appdata\local\programs\python\python38\lib\site-packages (from Flask-CORS==3.0.10) (1.17.0)
+Collecting limits>=2.8 (from Flask-Limiter==3.2.0)
+  Downloading limits-3.13.0-py3-none-any.whl.metadata (7.2 kB)
+Collecting ordered-set<5,>4 (from Flask-Limiter==3.2.0)
+  Downloading ordered_set-4.1.0-py3-none-any.whl.metadata (5.3 kB)
+Collecting rich<14,>=12 (from Flask-Limiter==3.2.0)
+  Downloading rich-13.9.4-py3-none-any.whl.metadata (18 kB)
+Requirement already satisfied: typing-extensions>=4 in c:\users\86135\appdata\local\programs\python\python38\lib\site-packages (from Flask-Limiter==3.2.0) (4.13.2)
+Collecting deprecated>=1.2.3 (from redis==4.3.0)
+  Downloading deprecated-1.3.1-py2.py3-none-any.whl.metadata (5.9 kB)
+Requirement already satisfied: packaging>=20.4 in c:\users\86135\appdata\local\programs\python\python38\lib\site-packages (from redis==4.3.0) (25.0)
+Collecting async-timeout>=4.0.2 (from redis==4.3.0)
+  Downloading async_timeout-5.0.1-py3-none-any.whl.metadata (5.1 kB)
+Requirement already satisfied: attrs>=19.2.0 in c:\users\86135\appdata\local\programs\python\python38\lib\site-packages (from pytest==7.0.0) (25.3.0)
+Requirement already satisfied: iniconfig in c:\users\86135\appdata\local\programs\python\python38\lib\site-packages (from pytest==7.0.0) (2.1.0)
+Requirement already satisfied: pluggy<2.0,>=0.12 in c:\users\86135\appdata\local\programs\python\python38\lib\site-packages (from pytest==7.0.0) (1.5.0)

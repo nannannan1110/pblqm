@@ -1,0 +1,42 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(chmod:*)",
+      "Bash(./scripts/init-project.sh:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run lint:*)",
+      "Bash(python:*)",
+      "Bash(venvScriptsactivate:*)",
+      "Bash(pip install:*)",
+      "Bash(.venvScriptsactivate:*)",
+      "Bash(npm run serve)",
+      "Bash(curl:*)",
+      "Bash(echo:*)",
+      "Bash(\"D:\\pbl5\\myproject\\frontend\\.env.production\")",
+      "Bash(\"D:\\pbl5\\myproject\\scripts\\dev-start.sh\")",
+      "Bash(npm --version)",
+      "Bash(if not exist .env copy .env.example .env)",
+      "Bash(.venvScriptsactivate.bat)",
+      "Bash(./venv/Scripts/pip:*)",
+      "Bash(./venv/Scripts/python:*)",
+      "Bash(timeout:*)",
+      "Bash(AdminLayout.vue)",
+      "Bash(Dashboard.vue)",
+      "Bash(Recipes.vue)",
+      "Bash(Users.vue)",
+      "Bash(Comments.vue)",
+      "Bash(Categories.vue)",
+      "Bash(Statistics.vue)",
+      "Bash(=1.4.18 PyMySQL==1.0.0 redis==4.3.0 python-dotenv==0.19.0 marshmallow==3.17.0 Pillow==9.0.0 pytest==7.0.0 coverage==6.0.0 gunicorn==20.1.0)",
+      "Bash(copy:*)",
+      "Bash(rm:*)",
+      "Bash(if not exist:*)",
+      "Bash(mysql:*)",
+      "Bash(dir:*)",
+      "Bash(findstr:*)",
+      "Bash(netstat:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
