@@ -324,3 +324,61 @@ class Like(db.Model):
             'recipe_title': self.recipe.title if self.recipe else None,
             'created_at': self.created_at.isoformat()
         }
+
+
+class Category(db.Model):
+    """分类表"""
+    __tablename__ = 'category'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text)
+    parent_id = db.Column(db.Integer, db.ForeignKey('category.id'))
+    sort_order = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # 自关联
+    parent = db.relationship('Category', remote_side=[id], backref='children')
+    
+    # 与菜谱的多对多关系
+    recipe_categories = db.relationship('RecipeCategory', backref='category', cascade='all, delete-orphan')
+
+    def to_dict(self, include_children=False):
+        """转换为字典"""
+        result = {
+            'id': self.id,
+            'name': self.name,
+            'description': self.description,
+            'parent_id': self.parent_id,
+            'sort_order': self.sort_order,
+            'created_at': self.created_at.isoformat()
+        }
+        if include_children:
+            result['children'] = [child.to_dict() for child in self.children]
+        return result
+
+
+class RecipeCategory(db.Model):
+    """菜谱分类关联表"""
+    __tablename__ = 'recipe_category'
+
+    id = db.Column(db.Integer, primary_key=True)
+    recipe_id = db.Column(db.Integer, db.ForeignKey('recipe.id'), nullable=False)
+    category_id = db.Column(db.Integer, db.ForeignKey('category.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # 复合唯一索引
+    __table_args__ = (
+        db.UniqueConstraint('recipe_id', 'category_id', name='unique_recipe_category'),
+    )
+
+    def to_dict(self):
+        """转换为字典"""
+        return {
+            'id': self.id,
+            'recipe_id': self.recipe_id,
+            'category_id': self.category_id,
+            'recipe_title': self.recipe.title if self.recipe else None,
+            'category_name': self.category.name if self.category else None,
+            'created_at': self.created_at.isoformat()
+        }

@@ -1,217 +1,241 @@
 #!/usr/bin/env python3
 """
-数据库初始化脚本
-运行此脚本来创建数据库表和添加初始数据
+初始化演示数据
 """
 
-import os
 import sys
-from flask import Flask
-from werkzeug.security import generate_password_hash
+from simple_server import app, db
+from models import User, Recipe, Role, UserRole, Favorite, Comment, Rating, Like
 
-# 添加项目根目录到Python路径
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
-# 直接导入模块
-from app import db
-from app.models.user import User
-from app.models.recipe import Recipe
-from app.models.comment import Comment
 
 def init_database():
     """初始化数据库"""
-    # 创建Flask应用
-    from flask import Flask
-    from flask_cors import CORS
-    from flask_jwt_extended import JWTManager
-    from app.config import Config
+    print("[START] 开始初始化演示数据库...")
 
-    app = Flask(__name__)
-    app.config.from_object(Config)
+    try:
+        with app.app_context():
+            # 删除所有现有数据
+            print("[STEP] 清理现有数据...")
+            db.drop_all()
 
-    # 初始化扩展
-    db.init_app(app)
-    CORS(app)
-    JWTManager(app)
+            # 创建所有表
+            print("[STEP] 创建数据库表...")
+            db.create_all()
 
-    # 注册蓝图
-    from app.routes.auth import auth_bp
-    from app.routes.recipes import recipes_bp
-    from app.routes.users import users_bp
+            # 1. 创建角色
+            print("[STEP] 创建角色...")
+            admin_role = Role(name='管理员', description='系统管理员，拥有所有权限')
+            user_role = Role(name='普通用户', description='普通用户，可以发布菜谱和评论')
+            moderator_role = Role(name='版主', description='版主，可以管理评论和分类')
 
-    app.register_blueprint(auth_bp, url_prefix='/api/auth')
-    app.register_blueprint(recipes_bp, url_prefix='/api/recipes')
-    app.register_blueprint(users_bp, url_prefix='/api/users')
+            db.session.add_all([admin_role, user_role, moderator_role])
+            db.session.commit()
 
-    with app.app_context():
-        # 创建所有表
-        print("正在创建数据库表...")
-        db.create_all()
-        print("数据库表创建完成！")
+            # 2. 创建用户
+            print("[STEP] 创建用户...")
+            admin_user = User(username='admin', email='admin@example.com')
+            admin_user.set_password('admin123')
 
-        # 添加测试数据
-        add_test_data()
-        print("测试数据添加完成！")
+            normal_user = User(username='user1', email='user1@example.com')
+            normal_user.set_password('user123')
 
-def add_test_data():
-    """添加测试数据"""
-    print("正在添加测试用户...")
+            chef_user = User(username='chef1', email='chef1@example.com')
+            chef_user.set_password('chef123')
 
-    # 检查是否已有用户
-    if User.query.first():
-        print("数据库中已有用户，跳过用户创建")
-        return
+            db.session.add_all([admin_user, normal_user, chef_user])
+            db.session.commit()
 
-    # 创建测试用户
-    users = [
-        {
-            'username': 'admin',
-            'email': 'admin@recipe.com',
-            'password': 'admin123',
-            'bio': '系统管理员，热爱美食',
-            'is_admin': True
-        },
-        {
-            'username': 'chef1',
-            'email': 'chef1@recipe.com',
-            'password': 'chef123',
-            'bio': '专业厨师，擅长中西料理',
-            'is_admin': False
-        },
-        {
-            'username': 'foodie',
-            'email': 'foodie@recipe.com',
-            'password': 'food123',
-            'bio': '美食爱好者，喜欢分享家常菜',
-            'is_admin': False
-        }
-    ]
+            # 3. 分配角色
+            print("[STEP] 分配角色...")
+            admin_role_assignment = UserRole(user_id=admin_user.id, role_id=admin_role.id)
+            user_role_assignment1 = UserRole(user_id=normal_user.id, role_id=user_role.id)
+            user_role_assignment2 = UserRole(user_id=chef_user.id, role_id=user_role.id)
 
-    for user_data in users:
-        user = User(
-            username=user_data['username'],
-            email=user_data['email'],
-            bio=user_data['bio'],
-            is_admin=user_data.get('is_admin', False)
-        )
-        user.set_password(user_data['password'])
-        db.session.add(user)
+            db.session.add_all([admin_role_assignment, user_role_assignment1, user_role_assignment2])
+            db.session.commit()
 
-    db.session.commit()
-    print(f"创建了 {len(users)} 个测试用户")
+            # 4. 创建菜谱
+            print("[STEP] 创建菜谱...")
 
-    # 获取用户用于创建菜谱和评论
-    admin = User.query.filter_by(username='admin').first()
-    chef1 = User.query.filter_by(username='chef1').first()
-    foodie = User.query.filter_by(username='foodie').first()
+            recipes = [
+                {
+                    'title': '蒜蓉西兰花',
+                    'description': '清淡爽口的健康蔬菜，营养丰富，制作简单',
+                    'ingredients': '西兰花 1个\n大蒜 5瓣\n生抽 1勺\n盐 适量\n食用油 适量',
+                    'instructions': '1. 西兰花洗净切小朵，大蒜切末\n2. 锅中烧开水，放入西兰花焯水2分钟\n3. 热锅放油，爆香蒜末\n4. 倒入西兰花翻炒\n5. 加生抽、盐调味即可\n6. 出锅前可以撒点香油提味',
+                    'prep_time': 8,
+                    'cook_time': 8,
+                    'difficulty': '简单',
+                    'servings': 2,
+                    'image': 'srxlh.jpg',
+                    'user_id': admin_user.id
+                },
+                {
+                    'title': '红烧肉',
+                    'description': '经典中式红烧肉，肥而不腻，入口即化',
+                    'ingredients': '五花肉 500g\n生抽 3勺\n老抽 1勺\n料酒 2勺\n冰糖 30g\n葱 2根\n姜 3片\n八角 2个',
+                    'instructions': '1. 五花肉切块，冷水下锅焯水去腥\n2. 热锅放少许油，下冰糖炒糖色\n3. 下肉块翻炒上色\n4. 加入生抽、老抽、料酒炒匀\n5. 加没过肉的热水，放葱姜八角\n6. 大火烧开转小火炖40分钟\n7. 大火收汁即可',
+                    'prep_time': 15,
+                    'cook_time': 45,
+                    'difficulty': '中等',
+                    'servings': 4,
+                    'image': 'hsr.jpg',
+                    'user_id': admin_user.id
+                },
+                {
+                    'title': '西红柿炒鸡蛋',
+                    'description': '经典家常菜，酸爽可口，营养丰富',
+                    'ingredients': '西红柿 2个\n鸡蛋 3个\n葱 1根\n盐 适量\n糖 少许\n食用油 适量',
+                    'instructions': '1. 西红柿洗净切块，鸡蛋打散\n2. 热锅放油，先炒鸡蛋盛起\n3. 锅中再放油，炒葱白香\n4. 下西红柿块炒出汤汁\n5. 加入炒蛋翻炒，调味即可',
+                    'prep_time': 10,
+                    'cook_time': 15,
+                    'difficulty': '简单',
+                    'servings': 2,
+                    'image': 'xhscjd.jpg',
+                    'user_id': admin_user.id
+                },
+                {
+                    'title': '宫保鸡丁',
+                    'description': '经典川菜，以糊辣荔枝味为特色，鸡丁嫩滑，花生香脆',
+                    'ingredients': '鸡腿肉 400g\n油炸花生米 80g\n大葱白 30g\n干辣椒 8个\n花椒 10粒\n姜片 3片\n蒜瓣 3瓣\n生抽 2勺\n陈醋 2勺\n白糖 1勺\n料酒 1勺\n干淀粉 1勺\n盐 少许',
+                    'instructions': '1. 鸡腿肉去骨切丁，加入料酒、少许盐和干淀粉抓匀，腌制10分钟\n2. 大葱白切小段，干辣椒剪段，姜蒜切片\n3. 调制碗汁：将生抽、陈醋、白糖、少许盐和1勺清水淀粉混合搅匀\n4. 热锅倒油，油热后下花椒和干辣椒段炒出香味\n5. 放入姜蒜片和葱段爆香\n6. 倒入腌制好的鸡丁，大火快速滑炒至变色断生\n7. 淋入调好的碗汁，翻炒均匀\n8. 待酱汁浓稠裹满鸡丁后，倒入花生米，快速翻炒几下即可出锅',
+                    'prep_time': 15,
+                    'cook_time': 10,
+                    'difficulty': '简单',
+                    'servings': 2,
+                    'image': 'gbjd.jpg',
+                    'user_id': chef_user.id
+                },
+                {
+                    'title': '麻婆豆腐',
+                    'description': '经典川菜，麻、辣、烫、香、酥、嫩、鲜、活',
+                    'ingredients': '嫩豆腐 400g\n牛肉末 100g\n豆瓣酱 2勺\n花椒粉 1勺\n干辣椒面 1勺\n生抽 1勺\n老抽 半勺\n糖 半勺\n淀粉水 适量\n葱 1根\n姜 3片\n蒜 3瓣',
+                    'instructions': '1. 豆腐切块，放入加了盐的开水中焯烫2分钟后捞出\n2. 葱姜蒜切末\n3. 热锅放油，下牛肉末炒散炒香\n4. 加入豆瓣酱、干辣椒面炒出红油\n5. 加入姜蒜末炒香\n6. 加入适量清水，放入豆腐块\n7. 加入生抽、老抽、糖调味\n8. 大火烧开后转小火煮3-5分钟\n9. 淋入淀粉水勾芡\n10. 出锅前撒上花椒粉和葱花',
+                    'prep_time': 10,
+                    'cook_time': 15,
+                    'difficulty': '中等',
+                    'servings': 3,
+                    'image': 'mpdf.jpg',
+                    'user_id': chef_user.id
+                },
+                {
+                    'title': '蛋炒饭',
+                    'description': '经典主食，粒粒分明，香气扑鼻',
+                    'ingredients': '米饭 1碗\n鸡蛋 2个\n火腿 50g\n青豆 30g\n胡萝卜 30g\n葱 1根\n盐 适量\n生抽 半勺\n食用油 适量',
+                    'instructions': '1. 火腿、胡萝卜切丁，青豆洗净\n2. 鸡蛋打散\n3. 锅中放油，下蛋液炒熟盛起\n4. 锅中再放油，下火腿丁、胡萝卜丁、青豆翻炒\n5. 倒入米饭，用勺子压散\n6. 加入炒好的鸡蛋，加盐和生抽调味\n7. 大火翻炒均匀，撒上葱花即可出锅',
+                    'prep_time': 5,
+                    'cook_time': 8,
+                    'difficulty': '简单',
+                    'servings': 1,
+                    'image': 'dcf.jpg',
+                    'user_id': admin_user.id
+                }
+            ]
 
-    print("正在添加测试菜谱...")
+            # 添加所有菜谱
+            recipe_objects = []
+            for recipe_data in recipes:
+                recipe = Recipe(**recipe_data)
+                recipe_objects.append(recipe)
+                db.session.add(recipe)
 
-    recipes = [
-        {
-            'title': '经典番茄炒蛋',
-            'description': '简单易学的家常菜，酸甜可口，营养搭配均衡',
-            'ingredients': '鸡蛋 3个\n番茄 2个\n葱 1根\n盐 适量\n糖 1小勺\n生抽 1勺\n食用油 适量',
-            'instructions': '1. 番茄洗净切块，鸡蛋打散\n2. 热锅放油，先炒鸡蛋盛起\n3. 锅中再放油，炒香葱白\n4. 下番茄块炒出汁水\n5. 加入炒蛋翻炒，调味即可',
-            'prep_time': 10,
-            'cook_time': 15,
-            'difficulty': '简单',
-            'servings': 2,
-            'image': 'tomato_egg.jpg',
-            'user_id': admin.id
-        },
-        {
-            'title': '红烧肉',
-            'description': '传统名菜，肥瘦相间，色泽红润，入口即化',
-            'ingredients': '五花肉 500g\n冰糖 30g\n生抽 3勺\n老抽 1勺\n料酒 2勺\n八角 2个\n桂皮 1小块\n葱段 适量\n姜片 3片',
-            'instructions': '1. 五花肉切块，冷水下锅焯水\n2. 锅中放冰糖，小火炒糖色\n3. 下肉块翻炒上色\n4. 加生抽、老抽、料酒\n5. 加开水没过肉，放香料\n6. 大火烧开，小火炖煮1小时\n7. 大火收汁即可',
-            'prep_time': 20,
-            'cook_time': 60,
-            'difficulty': '中等',
-            'servings': 4,
-            'image': 'braised_pork.jpg',
-            'user_id': chef1.id
-        },
-        {
-            'title': '蒜蓉西兰花',
-            'description': '清淡健康的素食做法，保持蔬菜的鲜嫩口感',
-            'ingredients': '西兰花 1个\n大蒜 5瓣\n盐 适量\n食用油 适量\n蚝油 1勺\n鸡精 少许',
-            'instructions': '1. 西兰花切小朵，焯水备用\n2. 大蒜切末\n3. 热锅放油，爆香蒜末\n4. 下西兰花翻炒\n5. 加盐、蚝油调味\n6. 最后撒鸡精炒匀即可',
-            'prep_time': 10,
-            'cook_time': 8,
-            'difficulty': '简单',
-            'servings': 2,
-            'image': 'broccoli_garlic.jpg',
-            'user_id': admin.id
-        }
-    ]
+            db.session.commit()
 
-    for recipe_data in recipes:
-        recipe = Recipe(
-            title=recipe_data['title'],
-            description=recipe_data['description'],
-            ingredients=recipe_data['ingredients'],
-            instructions=recipe_data['instructions'],
-            prep_time=recipe_data['prep_time'],
-            cook_time=recipe_data['cook_time'],
-            difficulty=recipe_data['difficulty'],
-            servings=recipe_data['servings'],
-            image=recipe_data['image'],
-            user_id=recipe_data['user_id']
-        )
-        db.session.add(recipe)
+            # 获取菜谱对象以便后续使用
+            recipe1, recipe2, recipe3, recipe4, recipe5, recipe6 = recipe_objects
 
-    db.session.commit()
-    print(f"创建了 {len(recipes)} 个测试菜谱")
+            # 5. 创建点赞
+            print("[STEP] 创建点赞...")
+            likes = [
+                Like(user_id=normal_user.id, recipe_id=recipe1.id),
+                Like(user_id=normal_user.id, recipe_id=recipe2.id),
+                Like(user_id=normal_user.id, recipe_id=recipe4.id),
+                Like(user_id=chef_user.id, recipe_id=recipe1.id),
+                Like(user_id=chef_user.id, recipe_id=recipe3.id),
+                Like(user_id=admin_user.id, recipe_id=recipe4.id),
+                Like(user_id=admin_user.id, recipe_id=recipe5.id),
+                Like(user_id=normal_user.id, recipe_id=recipe6.id),
+            ]
+            db.session.add_all(likes)
+            db.session.commit()
 
-    # 添加一些评论
-    print("正在添加测试评论...")
+            # 6. 创建收藏
+            print("[STEP] 创建收藏...")
+            favorites = [
+                Favorite(user_id=normal_user.id, recipe_id=recipe1.id),
+                Favorite(user_id=normal_user.id, recipe_id=recipe2.id),
+                Favorite(user_id=admin_user.id, recipe_id=recipe3.id),
+                Favorite(user_id=normal_user.id, recipe_id=recipe4.id),
+                Favorite(user_id=chef_user.id, recipe_id=recipe2.id),
+            ]
+            db.session.add_all(favorites)
+            db.session.commit()
 
-    recipe1 = Recipe.query.filter_by(title='经典番茄炒蛋').first()
-    recipe2 = Recipe.query.filter_by(title='红烧肉').first()
+            # 7. 创建评论
+            print("[STEP] 创建评论...")
+            comments = [
+                Comment(content='这道菜非常简单易做，味道也很好！', user_id=normal_user.id, recipe_id=recipe1.id),
+                Comment(content='建议可以加点蚝油调味，会更好吃。', user_id=admin_user.id, recipe_id=recipe1.id),
+                Comment(content='健康又美味，全家人都喜欢！', user_id=chef_user.id, recipe_id=recipe1.id),
+                Comment(content='红烧肉做起来有点复杂，但是真的很香！', user_id=normal_user.id, recipe_id=recipe2.id),
+                Comment(content='肥而不腻，入口即化，太棒了！', user_id=chef_user.id, recipe_id=recipe2.id),
+                Comment(content='经典就是经典，永远吃不腻！', user_id=admin_user.id, recipe_id=recipe3.id),
+                Comment(content='这道菜的味道太棒了！糊辣荔枝味很正宗！', user_id=normal_user.id, recipe_id=recipe4.id),
+                Comment(content='花生很脆，鸡丁很嫩，完美！', user_id=admin_user.id, recipe_id=recipe4.id),
+            ]
+            db.session.add_all(comments)
+            db.session.commit()
 
-    comments = [
-        {
-            'content': '这个菜谱很详细，做出来味道很好！家人都很喜欢。',
-            'rating': 5,
-            'user_id': chef1.id,
-            'recipe_id': recipe1.id
-        },
-        {
-            'content': '简单又美味，新手也能成功。建议番茄可以多放一个。',
-            'rating': 4,
-            'user_id': foodie.id,
-            'recipe_id': recipe1.id
-        },
-        {
-            'content': '红烧肉的做法很正宗，肉质软糯香甜，下次还做！',
-            'rating': 5,
-            'user_id': foodie.id,
-            'recipe_id': recipe2.id
-        }
-    ]
+            # 8. 创建评分
+            print("[STEP] 创建评分...")
+            ratings = [
+                Rating(score=5, user_id=normal_user.id, recipe_id=recipe1.id),
+                Rating(score=4, user_id=admin_user.id, recipe_id=recipe1.id),
+                Rating(score=5, user_id=chef_user.id, recipe_id=recipe1.id),
+                Rating(score=5, user_id=normal_user.id, recipe_id=recipe2.id),
+                Rating(score=5, user_id=chef_user.id, recipe_id=recipe2.id),
+                Rating(score=4, user_id=admin_user.id, recipe_id=recipe3.id),
+                Rating(score=5, user_id=normal_user.id, recipe_id=recipe4.id),
+                Rating(score=5, user_id=admin_user.id, recipe_id=recipe4.id),
+                Rating(score=5, user_id=normal_user.id, recipe_id=recipe5.id),
+                Rating(score=5, user_id=admin_user.id, recipe_id=recipe6.id),
+            ]
+            db.session.add_all(ratings)
+            db.session.commit()
 
-    for comment_data in comments:
-        comment = Comment(
-            content=comment_data['content'],
-            rating=comment_data['rating'],
-            user_id=comment_data['user_id'],
-            recipe_id=comment_data['recipe_id']
-        )
-        db.session.add(comment)
+            # 统计创建的数据
+            print("\n" + "=" * 50)
+            print("[OK] 演示数据初始化完成！")
+            print("=" * 50)
+            print(f"创建了 {Role.query.count()} 个角色")
+            print(f"创建了 {User.query.count()} 个用户")
+            print(f"创建了 {UserRole.query.count()} 个用户角色关联")
+            print(f"创建了 {Recipe.query.count()} 个菜谱")
+            print(f"创建了 {Like.query.count()} 个点赞")
+            print(f"创建了 {Favorite.query.count()} 个收藏")
+            print(f"创建了 {Comment.query.count()} 个评论")
+            print(f"创建了 {Rating.query.count()} 个评分")
+            print("=" * 50)
 
-    db.session.commit()
-    print(f"创建了 {len(comments)} 个测试评论")
+            print("\n[INFO] 测试账号信息:")
+            print("  管理员: admin / admin123")
+            print("  用户1: user1 / user123")
+            print("  用户2: chef1 / chef123")
 
-    print("\n数据库初始化完成！")
-    print("测试用户账号：")
-    print("管理员: admin / admin123")
-    print("厨师: chef1 / chef123")
-    print("美食爱好者: foodie / food123")
+            print("\n[INFO] 数据库文件: recipe_platform.db")
+
+            print("\n[OK] 完成！现在可以启动应用查看演示数据了。")
+
+    except Exception as e:
+        print(f"\n[ERROR] 发生错误: {e}")
+        import traceback
+        traceback.print_exc()
+        db.session.rollback()
+        return False
+
+    return True
+
 
 if __name__ == '__main__':
-    try:
-        init_database()
-    except Exception as e:
-        print(f"数据库初始化失败: {e}")
-        sys.exit(1)
+    success = init_database()
+    sys.exit(0 if success else 1)

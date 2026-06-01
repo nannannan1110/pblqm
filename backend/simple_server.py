@@ -27,7 +27,8 @@ CORS(app, origins=['http://localhost:8080', 'http://localhost:8081', 'http://127
 # 导入所有模型
 from models import (
     User, Recipe, Role, UserRole,
-    Favorite, Comment, Rating
+    Favorite, Comment, Rating, Like,
+    Category, RecipeCategory
 )
 
 
@@ -246,8 +247,18 @@ def health_check():
     return jsonify({'status': 'healthy', 'timestamp': datetime.now().isoformat()})
 
 @app.route('/api/recipes', methods=['GET'])
+@app.route('/api/recipes/', methods=['GET'])
 def get_recipes():
     try:
+        # 获取当前用户ID（如果已登录）
+        current_user_id = None
+        user_id_header = request.headers.get('X-User-ID')
+        if user_id_header:
+            try:
+                current_user_id = int(user_id_header)
+            except ValueError:
+                pass
+                
         # 获取分页参数
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 12, type=int)
@@ -274,7 +285,7 @@ def get_recipes():
         recipes = pagination.items
 
         return jsonify({
-            'recipes': [recipe.to_dict() for recipe in recipes],
+            'recipes': [recipe.to_dict(current_user_id) for recipe in recipes],
             'total': pagination.total,
             'pages': pagination.pages,
             'current_page': page
@@ -283,11 +294,122 @@ def get_recipes():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/recipes/<int:recipe_id>', methods=['GET'])
+@app.route('/api/recipes/<int:recipe_id>/', methods=['GET'])
 def get_recipe(recipe_id):
+    # 获取当前用户ID（如果已登录）
+    current_user_id = None
+    user_id_header = request.headers.get('X-User-ID')
+    if user_id_header:
+        try:
+            current_user_id = int(user_id_header)
+        except ValueError:
+            pass
+            
     recipe = Recipe.query.get_or_404(recipe_id)
-    return jsonify(recipe.to_dict())
+    return jsonify(recipe.to_dict(current_user_id))
+
+@app.route('/api/recipes', methods=['POST'])
+@app.route('/api/recipes/', methods=['POST'])
+@require_auth
+def create_recipe():
+    try:
+        data = request.get_json()
+        
+        # 验证必填字段
+        required_fields = ['title', 'ingredients', 'instructions']
+        for field in required_fields:
+            if not data.get(field):
+                return jsonify({'error': f'{field} 不能为空'}), 400
+        
+        # 创建新菜谱
+        recipe = Recipe(
+            title=data['title'],
+            description=data.get('description', ''),
+            ingredients=data['ingredients'],
+            instructions=data['instructions'],
+            prep_time=data.get('prep_time'),
+            cook_time=data.get('cook_time'),
+            difficulty=data.get('difficulty', '简单'),
+            servings=data.get('servings'),
+            image=data.get('image', ''),
+            user_id=g.current_user.id
+        )
+        
+        db.session.add(recipe)
+        db.session.commit()
+        
+        return jsonify({
+            'message': '菜谱创建成功',
+            'recipe': recipe.to_dict()
+        }), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/recipes/<int:recipe_id>', methods=['PUT'])
+@app.route('/api/recipes/<int:recipe_id>/', methods=['PUT'])
+@require_auth
+def update_recipe(recipe_id):
+    try:
+        recipe = Recipe.query.get_or_404(recipe_id)
+        
+        # 检查权限
+        if not g.current_user.can_edit_recipe(recipe) and not g.current_user.is_admin():
+            return jsonify({'error': '无权限修改此菜谱'}), 403
+        
+        data = request.get_json()
+        
+        # 更新字段
+        if 'title' in data:
+            recipe.title = data['title']
+        if 'description' in data:
+            recipe.description = data['description']
+        if 'ingredients' in data:
+            recipe.ingredients = data['ingredients']
+        if 'instructions' in data:
+            recipe.instructions = data['instructions']
+        if 'prep_time' in data:
+            recipe.prep_time = data['prep_time']
+        if 'cook_time' in data:
+            recipe.cook_time = data['cook_time']
+        if 'difficulty' in data:
+            recipe.difficulty = data['difficulty']
+        if 'servings' in data:
+            recipe.servings = data['servings']
+        if 'image' in data:
+            recipe.image = data['image']
+        
+        db.session.commit()
+        
+        return jsonify({
+            'message': '菜谱更新成功',
+            'recipe': recipe.to_dict()
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/recipes/<int:recipe_id>', methods=['DELETE'])
+@app.route('/api/recipes/<int:recipe_id>/', methods=['DELETE'])
+@require_auth
+def delete_recipe(recipe_id):
+    try:
+        recipe = Recipe.query.get_or_404(recipe_id)
+        
+        # 检查权限
+        if not g.current_user.can_delete_recipe(recipe):
+            return jsonify({'error': '无权限删除此菜谱'}), 403
+        
+        db.session.delete(recipe)
+        db.session.commit()
+        
+        return jsonify({'message': '菜谱删除成功'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/recipes/difficulties', methods=['GET'])
+@app.route('/api/recipes/difficulties/', methods=['GET'])
 def get_difficulties():
     """获取难度列表"""
     try:
@@ -295,6 +417,116 @@ def get_difficulties():
         difficulties = db.session.query(Recipe.difficulty).distinct().all()
         difficulty_list = [d[0] for d in difficulties if d[0]]
         return jsonify(difficulty_list)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+# ============= 点赞管理 API =============
+@app.route('/api/likes', methods=['GET'])
+@app.route('/api/likes/', methods=['GET'])
+def get_likes():
+    """获取用户点赞的菜谱"""
+    try:
+        user_id = request.args.get('user_id', type=int)
+        if not user_id:
+            return jsonify({'error': '用户ID不能为空'}), 400
+
+        likes = Like.query.filter_by(user_id=user_id).order_by(Like.created_at.desc()).all()
+        return jsonify([like.to_dict() for like in likes])
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/recipes/<int:recipe_id>/like', methods=['GET'])
+@app.route('/api/recipes/<int:recipe_id>/like/', methods=['GET'])
+def check_recipe_liked(recipe_id):
+    """检查用户是否点赞了菜谱"""
+    try:
+        user_id = request.args.get('user_id', type=int)
+        if not user_id:
+            return jsonify({'error': '用户ID不能为空'}), 400
+
+        like = Like.query.filter_by(user_id=user_id, recipe_id=recipe_id).first()
+        return jsonify({'liked': like is not None})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/likes', methods=['POST'])
+@app.route('/api/likes/', methods=['POST'])
+@require_auth
+def add_like():
+    """添加点赞"""
+    try:
+        data = request.get_json()
+
+        if not data or not data.get('recipe_id'):
+            return jsonify({'error': '菜谱ID不能为空'}), 400
+
+        # 检查是否已点赞
+        existing = Like.query.filter_by(
+            user_id=g.current_user.id,
+            recipe_id=data['recipe_id']
+        ).first()
+        if existing:
+            return jsonify({'error': '已点赞该菜谱'}), 400
+
+        # 检查菜谱是否存在
+        recipe = Recipe.query.get_or_404(data['recipe_id'])
+
+        like = Like(user_id=g.current_user.id, recipe_id=data['recipe_id'])
+        db.session.add(like)
+        db.session.commit()
+
+        return jsonify({
+            'message': '点赞成功',
+            'like': like.to_dict()
+        }), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/likes/<int:like_id>', methods=['DELETE'])
+@app.route('/api/likes/<int:like_id>/', methods=['DELETE'])
+@require_auth
+def remove_like(like_id):
+    """取消点赞"""
+    try:
+        like = Like.query.get_or_404(like_id)
+        
+        # 检查权限
+        if like.user_id != g.current_user.id and not g.current_user.is_admin():
+            return jsonify({'error': '无权限取消此点赞'}), 403
+
+        db.session.delete(like)
+        db.session.commit()
+
+        return jsonify({'message': '取消点赞成功'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+
+# ============= 用户管理 API =============
+@app.route('/api/users/<int:user_id>/recipes', methods=['GET'])
+@app.route('/api/users/<int:user_id>/recipes/', methods=['GET'])
+def get_user_recipes(user_id):
+    """获取用户创建的菜谱"""
+    try:
+        recipes = Recipe.query.filter_by(user_id=user_id).order_by(Recipe.created_at.desc()).all()
+        return jsonify([recipe.to_dict() for recipe in recipes])
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/users/me', methods=['GET'])
+@app.route('/api/users/me/', methods=['GET'])
+@require_auth
+def get_current_user():
+    """获取当前登录用户信息"""
+    try:
+        return jsonify(g.current_user.to_dict(include_roles=True))
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -576,6 +808,7 @@ def remove_category_from_recipe(recipe_id, category_id):
 
 # ============= 收藏管理 API =============
 @app.route('/api/favorites', methods=['GET'])
+@app.route('/api/favorites/', methods=['GET'])
 def get_favorites():
     """获取用户收藏的菜谱"""
     try:
@@ -588,7 +821,9 @@ def get_favorites():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+
 @app.route('/api/recipes/<int:recipe_id>/favorite', methods=['GET'])
+@app.route('/api/recipes/<int:recipe_id>/favorite/', methods=['GET'])
 def check_recipe_favorited(recipe_id):
     """检查用户是否收藏了菜谱"""
     try:
@@ -601,28 +836,30 @@ def check_recipe_favorited(recipe_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+
 @app.route('/api/favorites', methods=['POST'])
+@app.route('/api/favorites/', methods=['POST'])
+@require_auth
 def add_favorite():
     """添加收藏"""
     try:
         data = request.get_json()
 
-        if not data or not data.get('user_id') or not data.get('recipe_id'):
-            return jsonify({'error': '用户ID和菜谱ID不能为空'}), 400
+        if not data or not data.get('recipe_id'):
+            return jsonify({'error': '菜谱ID不能为空'}), 400
 
         # 检查是否已收藏
         existing = Favorite.query.filter_by(
-            user_id=data['user_id'],
+            user_id=g.current_user.id,
             recipe_id=data['recipe_id']
         ).first()
         if existing:
             return jsonify({'error': '已收藏该菜谱'}), 400
 
-        # 检查用户和菜谱是否存在
-        user = User.query.get_or_404(data['user_id'])
+        # 检查菜谱是否存在
         recipe = Recipe.query.get_or_404(data['recipe_id'])
 
-        favorite = Favorite(user_id=data['user_id'], recipe_id=data['recipe_id'])
+        favorite = Favorite(user_id=g.current_user.id, recipe_id=data['recipe_id'])
         db.session.add(favorite)
         db.session.commit()
 
@@ -634,11 +871,18 @@ def add_favorite():
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
 
+
 @app.route('/api/favorites/<int:favorite_id>', methods=['DELETE'])
+@app.route('/api/favorites/<int:favorite_id>/', methods=['DELETE'])
+@require_auth
 def remove_favorite(favorite_id):
     """取消收藏"""
     try:
         favorite = Favorite.query.get_or_404(favorite_id)
+        
+        # 检查权限
+        if favorite.user_id != g.current_user.id and not g.current_user.is_admin():
+            return jsonify({'error': '无权限取消此收藏'}), 403
 
         db.session.delete(favorite)
         db.session.commit()
