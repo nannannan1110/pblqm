@@ -5,11 +5,7 @@ import store from './store'
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
-
-// 设置默认白色背景，防止白色闪烁
-document.body.style.background = '#ffffff'
-document.body.style.margin = '0'
-document.body.style.padding = '0'
+import './styles/theme.scss'
 
 const app = createApp(App)
 
@@ -21,5 +17,8 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
 app.use(store)
 app.use(router)
 app.use(ElementPlus)
+
+// 初始化主题
+store.dispatch('initTheme')
 
 app.mount('#app')

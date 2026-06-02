@@ -1,5 +1,5 @@
 <template>
-  <div id="app" :class="{ 'admin-page': isAdminPage, 'auth-page': isAuthPage }">
+  <div id="app" :class="{ 'admin-page': isAdminPage, 'auth-page': isAuthPage, 'dark-mode': isDarkMode }">
     <!-- 导航栏（管理员页面和认证页面隐藏） -->
     <el-header v-if="!isAdminPage && !isAuthPage" class="app-header">
       <div class="header-container">
@@ -16,6 +16,9 @@
             mode="horizontal"
             :router="true"
             class="nav-menu"
+            :background-color="isDarkMode ? '#1a1a2e' : '#ffffff'"
+            :text-color="isDarkMode ? '#e4e4e7' : '#303133'"
+            :active-text-color="'#667eea'"
           >
             <el-menu-item index="/home">
               <el-icon><House /></el-icon>
@@ -37,6 +40,11 @@
         </div>
 
         <div class="header-right">
+          <!-- 主题切换按钮 -->
+          <el-button circle size="small" class="theme-toggle-btn" @click="toggleTheme">
+            <el-icon><Sunny v-if="!isDarkMode" /><Moon v-else /></el-icon>
+          </el-button>
+          
           <template v-if="authApi.isLoggedIn()">
             <!-- 用户菜单 -->
             <el-dropdown @command="handleUserMenuCommand">
@@ -71,8 +79,8 @@
           </template>
           <template v-else>
             <!-- 登录/注册按钮 -->
-            <el-button @click="$router.push('/')">登录</el-button>
-            <el-button type="primary" @click="$router.push('/register')">注册</el-button>
+            <el-button class="animate-btn" @click="$router.push('/')">登录</el-button>
+            <el-button type="primary" class="animate-btn" @click="$router.push('/register')">注册</el-button>
           </template>
         </div>
       </div>
@@ -80,7 +88,11 @@
 
     <!-- 主要内容区域 -->
     <el-main class="app-main">
-      <router-view />
+      <router-view v-slot="{ Component }">
+        <transition name="fade-slide" mode="out-in">
+          <component :is="Component" />
+        </transition>
+      </router-view>
     </el-main>
 
     <!-- 页脚（管理员页面和认证页面隐藏） -->
@@ -94,6 +106,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+import { useStore } from 'vuex'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
@@ -105,13 +118,22 @@ import {
   User,
   ArrowDown,
   SwitchButton,
-  Setting
+  Setting,
+  Sunny,
+  Moon
 } from '@element-plus/icons-vue'
 import { authApi, type User as UserType } from '@/api/auth'
 
+const store = useStore()
 const route = useRoute()
 const router = useRouter()
 const currentUser = ref<UserType | null>(null)
+
+const isDarkMode = computed(() => store.getters.isDarkMode)
+
+const toggleTheme = () => {
+  store.commit('TOGGLE_THEME')
+}
 
 // 当前激活的菜单项
 const activeRoute = computed(() => {
@@ -175,30 +197,6 @@ const handleUserMenuCommand = async (command: string) => {
   }
 }
 
-// 监听路由变化，更新用户信息和背景色
-watch(
-  () => route.path,
-  () => {
-    getCurrentUser()
-
-    // 动态控制背景色
-    if (isAuthPage.value) {
-      // 认证页面：透明背景（让页面自己的背景图片显示）
-      document.body.style.background = 'transparent'
-      document.body.style.backgroundColor = 'transparent'
-    } else if (isAdminPage.value) {
-      // 管理员页面：浅灰色背景
-      document.body.style.background = '#f0f2f5'
-      document.body.style.backgroundColor = '#f0f2f5'
-    } else {
-      // 普通页面：白色背景
-      document.body.style.background = '#ffffff'
-      document.body.style.backgroundColor = '#ffffff'
-    }
-  },
-  { immediate: true }
-)
-
 // 页面加载时获取用户信息
 onMounted(() => {
   getCurrentUser()
@@ -211,6 +209,57 @@ onMounted(() => {
   flex-direction: column;
   min-height: 100vh;
   font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  transition: background-color var(--transition-base), color var(--transition-base);
+}
+
+/* 页面过渡动画 */
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fade-slide-enter-from {
+  opacity: 0;
+  transform: translateX(20px) translateY(10px);
+}
+
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateX(-20px) translateY(-10px);
+}
+
+/* 按钮动画类 */
+.animate-btn {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.animate-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s;
+}
+
+.animate-btn:hover::before {
+  left: 100%;
+}
+
+.animate-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(64, 158, 255, 0.35);
+}
+
+.animate-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.25);
 }
 
 /* 确保 html 和 body 在认证页面也不会遮挡背景 */
@@ -222,14 +271,22 @@ onMounted(() => {
   min-height: 100%;
   margin: 0;
   padding: 0;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  transition: background var(--transition-base), color var(--transition-base);
 }
 
 .app-header {
-  background: white;
-  border-bottom: 1px solid #f0f0f0;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
   padding: 0;
   height: 60px;
+  transition: all 0.3s ease;
+}
+
+.app-header:hover {
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.08);
 }
 
 .header-container {
@@ -252,13 +309,14 @@ onMounted(() => {
   gap: 8px;
   font-size: 20px;
   font-weight: 600;
-  color: #409eff;
+  color: var(--accent-primary);
   text-decoration: none;
-  transition: color 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .logo:hover {
-  color: #337ecc;
+  color: var(--accent-secondary);
+  transform: scale(1.03);
 }
 
 .header-center {
@@ -279,6 +337,19 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
+.theme-toggle-btn {
+  border: none;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  transition: all 0.3s ease;
+}
+
+.theme-toggle-btn:hover {
+  background: var(--accent-gradient);
+  color: white;
+  transform: rotate(30deg);
+}
+
 .user-info {
   display: flex;
   align-items: center;
@@ -286,17 +357,19 @@ onMounted(() => {
   cursor: pointer;
   padding: 8px 12px;
   border-radius: 6px;
-  transition: background-color 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .user-info:hover {
-  background-color: #f5f7fa;
+  background-color: var(--bg-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .username {
   font-size: 14px;
   font-weight: 500;
-  color: #303133;
+  color: var(--text-primary);
   max-width: 120px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -305,14 +378,14 @@ onMounted(() => {
 
 .dropdown-icon {
   font-size: 12px;
-  color: #909399;
+  color: var(--text-tertiary);
   transition: transform 0.3s ease;
 }
 
 .app-main {
   flex: 1;
   padding: 0;
-  background-color: #f8f9fa;
+  background: var(--bg-secondary);
   min-height: calc(100vh - 60px);
 }
 
@@ -335,21 +408,22 @@ onMounted(() => {
 /* 管理员页面特殊样式 */
 .admin-page .app-main {
   min-height: 100vh;
-  background-color: #f0f2f5;
+  background-color: var(--bg-secondary);
 }
 
 .app-footer {
-  background: white;
-  border-top: 1px solid #f0f0f0;
+  background: var(--bg-card);
+  border-top: 1px solid var(--border-color);
   height: 60px;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 -2px 15px rgba(0, 0, 0, 0.03);
 }
 
 .footer-content {
   text-align: center;
-  color: #909399;
+  color: var(--text-tertiary);
   font-size: 14px;
 }
 
@@ -404,16 +478,32 @@ onMounted(() => {
   border-bottom: none;
   height: 60px;
   line-height: 60px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 :deep(.el-menu--horizontal > .el-menu-item.is-active) {
-  border-bottom: 2px solid #409eff;
-  color: #409eff;
+  border-bottom: 2px solid var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+:deep(.el-menu--horizontal > .el-menu-item:hover) {
+  color: var(--accent-primary);
+  background-color: var(--bg-hover);
 }
 
 :deep(.el-dropdown-menu__item) {
   display: flex;
   align-items: center;
   gap: 8px;
+  transition: all 0.25s ease;
+}
+
+:deep(.el-dropdown-menu__item:hover) {
+  background: var(--bg-hover);
+  transform: translateX(4px);
+}
+
+:deep(.el-button) {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 </style>

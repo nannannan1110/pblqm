@@ -39,7 +39,7 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/home',
     name: 'Home',
-    component: () => import('@/views/Home.vue'),
+    component: () => import('@/views/RecipeDiscover.vue'),
     meta: { requiresAuth: true } // 首页需要登录
   },
   {
