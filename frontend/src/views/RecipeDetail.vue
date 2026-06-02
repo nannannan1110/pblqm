@@ -43,6 +43,14 @@
               </div>
 
               <div class="recipe-actions">
+                <el-button 
+                  :type="isFavorite ? 'warning' : 'primary'" 
+                  @click="toggleFavorite"
+                  class="animate-btn"
+                >
+                  <el-icon><HeartFilled v-if="isFavorite" /><Heart v-else /></el-icon>
+                  {{ isFavorite ? '已收藏' : '收藏菜谱' }}
+                </el-button>
                 <el-button v-if="canEdit" type="primary" @click="editRecipe">
                   <el-icon><Edit /></el-icon>
                   编辑菜谱
@@ -63,10 +71,35 @@
           <el-col :span="12">
             <el-card class="section-card">
               <template #header>
-                <h3><el-icon><ShoppingBag /></el-icon> 食材清单</h3>
+                <div class="section-header-content">
+                  <h3><el-icon><ShoppingBag /></el-icon> 食材清单</h3>
+                  <el-button type="primary" size="small" @click="exportShoppingList">
+                    <el-icon><Document /></el-icon>
+                    生成购物清单
+                  </el-button>
+                </div>
               </template>
               <div class="ingredients-list">
-                <pre>{{ recipe.ingredients || '暂无食材信息' }}</pre>
+                <div v-if="parsedIngredients.length > 0" class="ingredients-checkbox-list">
+                  <div 
+                    v-for="(ingredient, index) in parsedIngredients" 
+                    :key="index"
+                    class="ingredient-item"
+                    @click="toggleIngredient(index)"
+                  >
+                    <el-checkbox 
+                      v-model="checkedIngredients[index]" 
+                      @click.stop
+                    />
+                    <span 
+                      :class="{ 'ingredient-checked': checkedIngredients[index] }"
+                      class="ingredient-text"
+                    >
+                      {{ ingredient }}
+                    </span>
+                  </div>
+                </div>
+                <pre v-else>{{ recipe.ingredients || '暂无食材信息' }}</pre>
               </div>
             </el-card>
           </el-col>
@@ -201,6 +234,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
+import { useStore } from 'vuex'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
@@ -211,7 +245,9 @@ import {
   Document,
   ChatLineSquare,
   Edit,
-  Delete
+  Delete,
+  Heart,
+  HeartFilled
 } from '@element-plus/icons-vue'
 import { recipeApi, type Recipe } from '@/api/recipes'
 import { commentApi, type Comment, type CommentStats } from '@/api/comments'
@@ -221,6 +257,7 @@ import { formatRelativeTime } from '@/api/comments'
 
 const route = useRoute()
 const router = useRouter()
+const store = useStore()
 
 const recipe = ref<Recipe | null>(null)
 const comments = ref<Comment[]>([])
@@ -232,6 +269,71 @@ const commentStats = ref<CommentStats>({
 
 const loading = ref(false)
 const submittingComment = ref(false)
+const checkedIngredients = ref<boolean[]>([])
+
+// 解析食材文本为列表
+const parsedIngredients = computed(() => {
+  if (!recipe.value?.ingredients) return []
+  
+  // 按换行符分割
+  let ingredients = recipe.value.ingredients
+    .split(/\n+/)
+    .map((line: string) => line.trim())
+    .filter((line: string) => line.length > 0)
+  
+  // 如果没有换行符，尝试按常见分隔符分割
+  if (ingredients.length === 1) {
+    const text = ingredients[0]
+    if (text.includes('，')) {
+      ingredients = text.split('，').map((s: string) => s.trim())
+    } else if (text.includes(',')) {
+      ingredients = text.split(',').map((s: string) => s.trim())
+    }
+  }
+  
+  // 初始化勾选状态
+  checkedIngredients.value = new Array(ingredients.length).fill(false)
+  
+  return ingredients
+})
+
+// 切换食材勾选
+const toggleIngredient = (index: number) => {
+  checkedIngredients.value[index] = !checkedIngredients.value[index]
+}
+
+// 生成购物清单
+const exportShoppingList = () => {
+  if (!recipe.value?.ingredients) {
+    ElMessage.warning('没有食材信息')
+    return
+  }
+  
+  let shoppingText = `🛒 ${recipe.value.title} - 购物清单\n`
+  shoppingText += '='.repeat(30) + '\n\n'
+  
+  if (parsedIngredients.value.length > 0) {
+    const uncheckedIngredients = parsedIngredients.value.filter(
+      (_, index) => !checkedIngredients.value[index]
+    )
+    
+    if (uncheckedIngredients.length > 0) {
+      shoppingText += '需要购买的食材：\n'
+      uncheckedIngredients.forEach((ingredient, i) => {
+        shoppingText += `${i + 1}. ${ingredient}\n`
+      })
+    } else {
+      shoppingText += '所有食材已准备完成！'
+    }
+  } else {
+    shoppingText += recipe.value.ingredients
+  }
+  
+  // 复制到剪贴板
+  navigator.clipboard.writeText(shoppingText)
+    .then(() => ElMessage.success('购物清单已复制到剪贴板！'))
+    .catch(() => ElMessage.error('复制失败，请手动复制'))
+}
 
 // 使用data URL作为默认图片（仅当真正没有图片时）
 const defaultImage = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2Y1ZjVmNSIvPjx0ZXh0IHg9IjIwMCIgeT0iMTMwIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjQiIGZpbGw9IiM5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiPuWbvueJh+WKoOi9veWksei0pTwvdGV4dD48dGV4dCB4PSIyMDAiIHk9IjE3MCIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjQwIiBmaWxsPSIjY2NjIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7wn5KePC90ZXh0Pjwvc3ZnPg=='
@@ -277,6 +379,24 @@ const canEditComment = (comment: Comment) => {
   return currentUser.value && comment.user_id === currentUser.value.id
 }
 
+// 检查是否已收藏
+const isFavorite = computed(() => {
+  return store.state.favorites.some(fav => fav.id === recipe.value?.id)
+})
+
+// 切换收藏状态
+const toggleFavorite = () => {
+  if (!recipe.value) return
+  
+  store.commit('TOGGLE_FAVORITE', recipe.value)
+  
+  if (isFavorite.value) {
+    ElMessage.success('已收藏')
+  } else {
+    ElMessage.success('已取消收藏')
+  }
+}
+
 // 获取难度样式类
 const difficultyClass = (difficulty?: string) => {
   switch (difficulty) {
@@ -303,6 +423,11 @@ const fetchRecipe = async () => {
     loading.value = true
     const recipeId = Number(route.params.id)
     recipe.value = await recipeApi.getRecipe(recipeId)
+    
+    // 添加到浏览历史
+    if (recipe.value) {
+      store.commit('ADD_VIEW_HISTORY', recipe.value)
+    }
 
     // 获取评论统计
     await fetchCommentStats()
@@ -577,6 +702,12 @@ onMounted(() => {
   margin-bottom: 0;
 }
 
+.section-header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .section-card h3 {
   margin: 0;
   display: flex;
@@ -591,6 +722,37 @@ onMounted(() => {
   line-height: 1.6;
   color: #606266;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.ingredients-checkbox-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ingredient-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.ingredient-item:hover {
+  background: #f5f7fa;
+}
+
+.ingredient-text {
+  flex: 1;
+  color: #303133;
+  transition: all 0.2s ease;
+}
+
+.ingredient-checked {
+  text-decoration: line-through;
+  color: #c0c4cc;
 }
 
 .comments-section {

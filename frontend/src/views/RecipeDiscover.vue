@@ -46,6 +46,46 @@
         <div class="filter-row">
           <div class="filter-group">
             <span class="filter-label">
+              <el-icon><Globe /></el-icon>
+              菜系分类
+            </span>
+            <div class="filter-tags">
+              <el-tag
+                v-for="cuisine in cuisineOptions"
+                :key="cuisine"
+                :class="{ active: selectedCuisine === cuisine }"
+                class="cuisine-tag"
+                :type="selectedCuisine === cuisine ? 'primary' : ''"
+                @click="selectedCuisine = selectedCuisine === cuisine ? '全部' : cuisine"
+              >
+                {{ cuisine }}
+              </el-tag>
+            </div>
+          </div>
+        </div>
+        <div class="filter-row">
+          <div class="filter-group">
+            <span class="filter-label">
+              <el-icon><Sunny /></el-icon>
+              用餐场景
+            </span>
+            <div class="filter-tags">
+              <el-tag
+                v-for="scene in sceneOptions"
+                :key="scene"
+                :class="{ active: selectedScene === scene }"
+                class="scene-tag"
+                :type="selectedScene === scene ? 'success' : ''"
+                @click="selectedScene = selectedScene === scene ? '全部' : scene"
+              >
+                {{ scene }}
+              </el-tag>
+            </div>
+          </div>
+        </div>
+        <div class="filter-row">
+          <div class="filter-group">
+            <span class="filter-label">
               <el-icon><Food /></el-icon>
               食材筛选
             </span>
@@ -95,6 +135,24 @@
                 @click="selectedTime = selectedTime === time.value ? '' : time.value"
               >
                 {{ time.label }}
+              </el-tag>
+            </div>
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">
+              <el-icon><Star /></el-icon>
+              口味偏好
+            </span>
+            <div class="filter-tags">
+              <el-tag
+                v-for="taste in tasteOptions"
+                :key="taste"
+                :class="{ active: selectedTaste === taste }"
+                class="taste-tag"
+                :type="selectedTaste === taste ? 'warning' : ''"
+                @click="selectedTaste = selectedTaste === taste ? '全部' : taste"
+              >
+                {{ taste }}
               </el-tag>
             </div>
           </div>
@@ -256,7 +314,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Search, Sunny, Moon, Food, TrendCharts, Timer, Star, Clock, HeartFilled, List, Heart } from '@element-plus/icons-vue'
+import { Search, Sunny, Moon, Food, TrendCharts, Timer, Star, Clock, HeartFilled, List, Heart, Globe } from '@element-plus/icons-vue'
 import { recipeApi, type Recipe } from '@/api/recipes'
 
 const store = useStore()
@@ -286,6 +344,14 @@ const timeOptions = [
   { label: '1小时内', value: '60' },
   { label: '1小时以上', value: '60+' }
 ]
+const cuisineOptions = ['全部', '中餐', '西餐', '日料', '韩餐', '东南亚', '其他']
+const sceneOptions = ['全部', '早餐', '午餐', '晚餐', '下午茶', '宵夜', '便当']
+const tasteOptions = ['全部', '清淡', '辣', '酸甜', '咸鲜', '酱香', '其他']
+
+// 当前选择
+const selectedCuisine = ref('全部')
+const selectedScene = ref('全部')
+const selectedTaste = ref('全部')
 
 // 计算属性
 const isDarkMode = computed(() => store.getters.isDarkMode)
@@ -313,6 +379,50 @@ const filteredRecipes = computed(() => {
       r.ingredients?.toLowerCase().includes(query) ||
       r.description?.toLowerCase().includes(query)
     )
+  }
+  
+  // 菜系过滤 (模拟)
+  if (selectedCuisine.value !== '全部') {
+    result = result.filter(r => {
+      // 简单的模拟分类逻辑
+      const title = r.title.toLowerCase()
+      if (selectedCuisine.value === '中餐') {
+        return !['牛排', 'pizza', 'pasta', '寿司', '刺身'].some(key => title.includes(key))
+      } else if (selectedCuisine.value === '西餐') {
+        return ['牛排', 'pizza', '意大利', '意面', '意式'].some(key => title.includes(key))
+      } else if (selectedCuisine.value === '日料') {
+        return ['寿司', '刺身', '日式', '日本', '天妇罗'].some(key => title.includes(key))
+      }
+      return true
+    })
+  }
+  
+  // 场景过滤 (模拟)
+  if (selectedScene.value !== '全部') {
+    result = result.filter(r => {
+      const title = r.title.toLowerCase()
+      if (selectedScene.value === '早餐') {
+        return ['蛋', '牛奶', '面包', '粥', '早餐'].some(key => title.includes(key))
+      } else if (selectedScene.value === '晚餐' || selectedScene.value === '午餐') {
+        return !['蛋', '牛奶', '面包', '粥', '早餐'].some(key => title.includes(key))
+      }
+      return true
+    })
+  }
+  
+  // 口味过滤 (模拟)
+  if (selectedTaste.value !== '全部') {
+    result = result.filter(r => {
+      const desc = (r.description || '') + (r.ingredients || '')
+      if (selectedTaste.value === '辣') {
+        return desc.includes('辣') || desc.includes('辣椒')
+      } else if (selectedTaste.value === '清淡') {
+        return !desc.includes('辣') && !desc.includes('重口味')
+      } else if (selectedTaste.value === '酸甜') {
+        return desc.includes('酸') || desc.includes('甜')
+      }
+      return true
+    })
   }
   
   // 难度过滤
@@ -378,6 +488,9 @@ const resetFilters = () => {
   selectedIngredients.value = []
   selectedDifficulty.value = ''
   selectedTime.value = ''
+  selectedCuisine.value = '全部'
+  selectedScene.value = '全部'
+  selectedTaste.value = '全部'
 }
 
 const isFavorite = (recipe: Recipe) => {
