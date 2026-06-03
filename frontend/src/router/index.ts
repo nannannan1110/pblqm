@@ -85,6 +85,20 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('@/views/Profile.vue'),
     meta: { requiresAuth: true }
   },
+  // 我的收藏页面
+  {
+    path: '/favorites',
+    name: 'Favorites',
+    component: () => import('@/views/Favorites.vue'),
+    meta: { requiresAuth: true }
+  },
+  // 浏览历史页面
+  {
+    path: '/history',
+    name: 'History',
+    component: () => import('@/views/History.vue'),
+    meta: { requiresAuth: true }
+  },
   // 我的菜谱页面
   {
     path: '/my-recipes',

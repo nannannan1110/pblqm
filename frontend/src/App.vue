@@ -28,10 +28,18 @@
               <el-icon><Collection /></el-icon>
               <span>菜谱</span>
             </el-menu-item>
-            <el-menu-item v-if="authApi.isLoggedIn()" index="/create-recipe">
-              <el-icon><Plus /></el-icon>
-              <span>创建菜谱</span>
-            </el-menu-item>
+            <el-menu-item v-if="authApi.isLoggedIn()" index="/favorites">
+            <el-icon><HeartFilled /></el-icon>
+            <span>我的收藏</span>
+          </el-menu-item>
+          <el-menu-item v-if="authApi.isLoggedIn()" index="/history">
+            <el-icon><Clock /></el-icon>
+            <span>浏览历史</span>
+          </el-menu-item>
+          <el-menu-item v-if="authApi.isLoggedIn()" index="/create-recipe">
+            <el-icon><Plus /></el-icon>
+            <span>创建菜谱</span>
+          </el-menu-item>
             <el-menu-item index="/about">
               <el-icon><InfoFilled /></el-icon>
               <span>关于</span>
@@ -120,7 +128,9 @@ import {
   SwitchButton,
   Setting,
   Sunny,
-  Moon
+  Moon,
+  HeartFilled,
+  Clock
 } from '@element-plus/icons-vue'
 import { authApi, type User as UserType } from '@/api/auth'
 
