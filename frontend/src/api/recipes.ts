@@ -32,7 +32,7 @@ export interface SearchParams {
   difficulty?: string
   max_prep_time?: number
   max_cook_time?: number
-  sort_by?: 'created_at' | 'title' | 'prep_time' | 'cook_time'
+  sort_by?: 'created_at' | 'title' | 'prep_time' | 'cook_time' | 'likes_count' | 'ratings_count'
   sort_order?: 'asc' | 'desc'
 }
 
@@ -40,6 +40,9 @@ export interface SearchParams {
 export interface RecipeQuery extends SearchParams {
   page?: number
   per_page?: number
+  // 排序选项
+  sort_by?: 'created_at' | 'title' | 'prep_time' | 'cook_time' | 'likes_count' | 'ratings_count'
+  sort_order?: 'asc' | 'desc'
 }
 
 // 创建/更新菜谱请求数据
@@ -114,6 +117,30 @@ export const recipeApi = {
   // 删除菜谱
   deleteRecipe(id: number) {
     return api.delete<{ message: string }>(`/recipes/${id}`)
+  },
+
+  // 获取我收藏的菜谱
+  getMyFavorites(page?: number, per_page?: number) {
+    const params = new URLSearchParams()
+    if (page) params.append('page', page.toString())
+    if (per_page) params.append('per_page', per_page.toString())
+
+    const queryString = params.toString()
+    const url = queryString ? `/recipes/favorites/my?${queryString}` : '/recipes/favorites/my'
+
+    return api.get<RecipesResponse>(url)
+  },
+
+  // 获取热门菜谱
+  getHotRecipes(page?: number, per_page?: number) {
+    const params = new URLSearchParams()
+    if (page) params.append('page', page.toString())
+    if (per_page) params.append('per_page', per_page.toString())
+
+    const queryString = params.toString()
+    const url = queryString ? `/recipes/hot?${queryString}` : '/recipes/hot'
+
+    return api.get<RecipesResponse>(url)
   }
 }
 

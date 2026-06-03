@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import db, Recipe, User, Like, Favorite
+from models import db, Recipe, User, Like, Favorite, Comment, Rating
 from sqlalchemy import or_, and_
 
 recipes_bp = Blueprint('recipes', __name__)
@@ -346,3 +346,127 @@ def get_my_favorites():
         'pages': favorites.pages,
         'current_page': page
     })
+
+
+# 获取热门菜谱
+@recipes_bp.route('/hot', methods=['GET'])
+def get_hot_recipes():
+    """获取热门菜谱（按点赞数排序）"""
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 10, type=int)
+
+    # 按点赞数排序，获取热门菜谱
+    hot_recipes = Recipe.query\
+        .outerjoin(Like, Recipe.id == Like.recipe_id)\
+        .group_by(Recipe.id)\
+        .order_by(db.func.count(Like.id).desc())\
+        .paginate(page=page, per_page=per_page, error_out=False)
+
+    return jsonify({
+        'recipes': [recipe.to_dict() for recipe in hot_recipes.items],
+        'total': hot_recipes.total,
+        'pages': hot_recipes.pages,
+        'current_page': page
+    })
+
+
+# 评论相关功能
+@recipes_bp.route('/<int:recipe_id>/comments/stats', methods=['GET'])
+def get_recipe_comment_stats(recipe_id):
+    """获取菜谱的评论统计信息"""
+    # 验证菜谱是否存在
+    recipe = Recipe.query.get_or_404(recipe_id)
+
+    # 获取评论数量
+    total_comments = Comment.query.filter_by(recipe_id=recipe_id).count()
+
+    if total_comments == 0:
+        return jsonify({
+            'total_comments': 0,
+            'average_rating': 0,
+            'rating_distribution': {
+                1: 0, 2: 0, 3: 0, 4: 0, 5: 0
+            }
+        })
+
+    # 计算平均评分
+    avg_rating = db.session.query(db.func.avg(Comment.rating))\
+        .filter_by(recipe_id=recipe_id).scalar() or 0
+
+    # 获取评分分布
+    rating_distribution = {}
+    for rating in range(1, 6):
+        count = Comment.query.filter_by(recipe_id=recipe_id, rating=rating).count()
+        rating_distribution[rating] = count
+
+    return jsonify({
+        'comment_count': total_comments,
+        'rating_count': total_comments,
+        'average_score': round(float(avg_rating), 2),
+        'rating_distribution': rating_distribution
+    })
+
+
+@recipes_bp.route('/<int:recipe_id>/comments', methods=['GET'])
+def get_recipe_comments(recipe_id):
+    """获取菜谱的评论列表（分页）"""
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 10, type=int)
+
+    # 验证菜谱是否存在
+    Recipe.query.get_or_404(recipe_id)
+
+    # 分页查询评论
+    comments = Comment.query.filter_by(recipe_id=recipe_id, parent_id=None)\
+        .order_by(Comment.created_at.desc())\
+        .paginate(page=page, per_page=per_page, error_out=False)
+
+    # 添加用户信息到评论
+    comments_data = []
+    for comment in comments.items:
+        comment_dict = comment.to_dict()
+        comment_dict['user'] = User.query.get(comment.user_id).to_dict()
+        comments_data.append(comment_dict)
+
+    return jsonify({
+        'comments': comments_data,
+        'total': comments.total,
+        'pages': comments.pages,
+        'current_page': page
+    })
+
+
+@recipes_bp.route('/<int:recipe_id>/comments', methods=['POST'])
+@jwt_required()
+def create_recipe_comment(recipe_id):
+    """创建菜谱评论"""
+    data = request.get_json()
+    user_id = get_jwt_identity()
+
+    # 验证必填字段
+    if not data.get('content'):
+        return jsonify({'message': '评论内容不能为空'}), 400
+
+    # 验证菜谱是否存在
+    Recipe.query.get_or_404(recipe_id)
+
+    # 验证评分范围
+    rating = data.get('rating', 5)
+    if not isinstance(rating, int) or rating < 1 or rating > 5:
+        return jsonify({'message': '评分必须在1-5之间'}), 400
+
+    comment = Comment(
+        content=data['content'],
+        rating=rating,
+        user_id=user_id,
+        recipe_id=recipe_id
+    )
+
+    db.session.add(comment)
+    db.session.commit()
+
+    # 返回评论详情，包含用户信息
+    comment_data = comment.to_dict()
+    comment_data['user'] = User.query.get(user_id).to_dict()
+
+    return jsonify(comment_data), 201

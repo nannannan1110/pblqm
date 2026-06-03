@@ -43,69 +43,29 @@
     <!-- 筛选器区域 -->
     <div class="filters-section animate-fade-in-up animate-delay-1">
       <div class="filter-card">
-        <div class="filter-row">
-          <div class="filter-group">
-            <span class="filter-label">
-              <el-icon><Globe /></el-icon>
-              菜系分类
-            </span>
-            <div class="filter-tags">
-              <el-tag
-                v-for="cuisine in cuisineOptions"
-                :key="cuisine"
-                :class="{ active: selectedCuisine === cuisine }"
-                class="cuisine-tag"
-                :type="selectedCuisine === cuisine ? 'primary' : ''"
-                @click="selectedCuisine = selectedCuisine === cuisine ? '全部' : cuisine"
-              >
-                {{ cuisine }}
-              </el-tag>
-            </div>
-          </div>
-        </div>
-        <div class="filter-row">
-          <div class="filter-group">
-            <span class="filter-label">
-              <el-icon><Sunny /></el-icon>
-              用餐场景
-            </span>
-            <div class="filter-tags">
-              <el-tag
-                v-for="scene in sceneOptions"
-                :key="scene"
-                :class="{ active: selectedScene === scene }"
-                class="scene-tag"
-                :type="selectedScene === scene ? 'success' : ''"
-                @click="selectedScene = selectedScene === scene ? '全部' : scene"
-              >
-                {{ scene }}
-              </el-tag>
-            </div>
-          </div>
-        </div>
-        <div class="filter-row">
-          <div class="filter-group">
-            <span class="filter-label">
-              <el-icon><Food /></el-icon>
-              食材筛选
-            </span>
-            <div class="filter-tags">
-              <el-tag
-                v-for="ingredient in ingredients"
-                :key="ingredient"
-                :class="{ active: selectedIngredients.includes(ingredient) }"
-                class="ingredient-tag"
-                @click="toggleIngredient(ingredient)"
-              >
-                {{ ingredient }}
-              </el-tag>
-            </div>
-          </div>
-        </div>
+        <!-- 第一行：主要筛选 -->
         <div class="filter-row">
           <div class="filter-group">
             <span class="filter-label">
               <el-icon><TrendCharts /></el-icon>
+              排序方式
+            </span>
+            <div class="filter-tags">
+              <el-tag
+                v-for="sort in sortOptions"
+                :key="sort.value"
+                :class="{ active: selectedSort === sort.value }"
+                class="sort-tag"
+                :type="selectedSort === sort.value ? 'primary' : ''"
+                @click="handleSortChange(sort.value)"
+              >
+                {{ sort.label }}
+              </el-tag>
+            </div>
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">
+              <el-icon><Star /></el-icon>
               难度筛选
             </span>
             <div class="filter-tags">
@@ -121,10 +81,14 @@
               </el-tag>
             </div>
           </div>
+        </div>
+
+        <!-- 第二行：时间和评分 -->
+        <div class="filter-row">
           <div class="filter-group">
             <span class="filter-label">
               <el-icon><Timer /></el-icon>
-              时长筛选
+              总时长
             </span>
             <div class="filter-tags">
               <el-tag
@@ -141,32 +105,155 @@
           <div class="filter-group">
             <span class="filter-label">
               <el-icon><Star /></el-icon>
-              口味偏好
+              最低评分
             </span>
             <div class="filter-tags">
               <el-tag
-                v-for="taste in tasteOptions"
-                :key="taste"
-                :class="{ active: selectedTaste === taste }"
-                class="taste-tag"
-                :type="selectedTaste === taste ? 'warning' : ''"
-                @click="selectedTaste = selectedTaste === taste ? '全部' : taste"
+                v-for="rating in ratingOptions"
+                :key="rating.value"
+                :class="{ active: selectedMinRating === rating.value }"
+                class="rating-tag"
+                :type="selectedMinRating === rating.value ? 'warning' : ''"
+                @click="selectedMinRating = selectedMinRating === rating.value ? 0 : rating.value"
               >
-                {{ taste }}
+                {{ rating.label }}
               </el-tag>
             </div>
           </div>
         </div>
+
+        <!-- 第三行：食材筛选（可多选） -->
+        <div class="filter-row">
+          <div class="filter-group full-width">
+            <span class="filter-label">
+              <el-icon><Food /></el-icon>
+              食材筛选
+              <el-tag size="small" type="info" v-if="selectedIngredients.length > 0">
+                已选 {{ selectedIngredients.length }} 个
+              </el-tag>
+            </span>
+            <div class="filter-tags">
+              <el-tag
+                v-for="ingredient in ingredientOptions"
+                :key="ingredient.label"
+                :class="{ active: selectedIngredients.includes(ingredient.label) }"
+                class="ingredient-tag"
+                @click="toggleIngredient(ingredient.label)"
+              >
+                {{ ingredient.label }}
+              </el-tag>
+            </div>
+          </div>
+        </div>
+
+        <!-- 第四行：操作按钮 -->
         <div class="filter-actions">
-          <el-button @click="resetFilters" size="small">重置筛选</el-button>
+          <el-button @click="resetFilters" size="small" type="info">
+            <el-icon><RefreshRight /></el-icon>
+            重置筛选
+          </el-button>
+          <el-button @click="applyFilters" type="primary" size="small">
+            <el-icon><Filter /></el-icon>
+            应用筛选
+          </el-button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 筛选结果统计 -->
+    <div v-if="hasActiveFilters || hasSearchQuery" class="results-header animate-fade-in-up">
+      <div class="results-info">
+        <h3>
+          <el-icon><List /></el-icon>
+          搜索结果
+          <span class="results-count">共 {{ filteredRecipes.length }} 道菜谱</span>
+        </h3>
+        <div class="active-filters">
+          <el-tag
+            v-if="searchQuery"
+            closable
+            size="small"
+            @close="clearSearch"
+            class="filter-chip"
+          >
+            关键词: {{ searchQuery }}
+          </el-tag>
+          <el-tag
+            v-if="selectedDifficulty"
+            closable
+            size="small"
+            type="success"
+            @close="selectedDifficulty = ''"
+            class="filter-chip"
+          >
+            难度: {{ selectedDifficulty }}
+          </el-tag>
+          <el-tag
+            v-if="selectedTime"
+            closable
+            size="small"
+            type="warning"
+            @close="selectedTime = ''"
+            class="filter-chip"
+          >
+            时长: {{ getTimeLabel(selectedTime) }}
+          </el-tag>
+          <el-tag
+            v-if="selectedMinRating > 0"
+            closable
+            size="small"
+            type="danger"
+            @close="selectedMinRating = 0"
+            class="filter-chip"
+          >
+            评分: ≥{{ selectedMinRating }}
+          </el-tag>
+          <el-tag
+            v-if="selectedSort !== 'created_at'"
+            closable
+            size="small"
+            type="info"
+            @close="selectedSort = 'created_at'"
+            class="filter-chip"
+          >
+            排序: {{ getSortLabel(selectedSort) }}
+          </el-tag>
         </div>
       </div>
     </div>
 
     <!-- 主内容区域 -->
     <div class="main-content">
+      <!-- 筛选/搜索结果 -->
+      <div v-if="hasActiveFilters || hasSearchQuery" class="section results-section animate-fade-in-up">
+        <div v-if="resultsLoading" class="loading-wrapper">
+          <el-icon class="is-loading"><Loading /></el-icon>
+          <span>加载中...</span>
+        </div>
+        <div v-else-if="filteredRecipes.length === 0" class="empty-state">
+          <el-empty description="暂无匹配的菜谱">
+            <el-button type="primary" @click="resetFilters">重置筛选</el-button>
+          </el-empty>
+        </div>
+        <div v-else class="recipe-grid">
+          <div
+            v-for="(recipe, index) in filteredRecipes"
+            :key="recipe.id"
+            class="recipe-card-wrapper"
+            :style="{ animationDelay: `${index * 0.08}s` }"
+          >
+            <RecipeCard
+              :recipe="recipe"
+              :is-favorite="isFavorite(recipe)"
+              @click="viewRecipeDetail(recipe)"
+              @toggle-favorite="toggleFavorite(recipe)"
+            />
+          </div>
+        </div>
+      </div>
+
       <!-- 每日推荐 -->
-      <div v-if="showDailyRecommend" class="section daily-section animate-fade-in-up animate-delay-2">
+      <div v-if="!hasActiveFilters && !hasSearchQuery && dailyRecommendations.length > 0" class="section daily-section animate-fade-in-up">
         <div class="section-header">
           <h2 class="section-title">
             <el-icon><Star /></el-icon>
@@ -175,7 +262,8 @@
           </h2>
         </div>
         <div v-if="dailyLoading" class="loading-wrapper">
-          <div class="loading-spinner"></div>
+          <el-icon class="is-loading"><Loading /></el-icon>
+          <span>加载中...</span>
         </div>
         <div v-else class="recipe-grid">
           <div
@@ -195,7 +283,7 @@
       </div>
 
       <!-- 历史记录 -->
-      <div v-if="viewHistory.length > 0" class="section history-section animate-fade-in-up animate-delay-3">
+      <div v-if="!hasActiveFilters && !hasSearchQuery && viewHistory.length > 0" class="section history-section animate-fade-in-up">
         <div class="section-header">
           <h2 class="section-title">
             <el-icon><Clock /></el-icon>
@@ -221,7 +309,7 @@
       </div>
 
       <!-- 我的收藏 -->
-      <div v-if="favorites.length > 0" class="section favorite-section animate-fade-in-up animate-delay-4">
+      <div v-if="!hasActiveFilters && !hasSearchQuery && favorites.length > 0" class="section favorite-section animate-fade-in-up">
         <div class="section-header">
           <h2 class="section-title">
             <el-icon><HeartFilled /></el-icon>
@@ -245,49 +333,22 @@
         </div>
       </div>
 
-      <!-- 搜索/筛选结果 -->
-      <div v-if="hasActiveFilters || hasSearchQuery" class="section results-section animate-fade-in-up animate-delay-2">
-        <div class="section-header">
-          <h2 class="section-title">
-            <el-icon><List /></el-icon>
-            搜索结果
-            <span class="section-desc" v-if="filteredRecipes.length > 0">共 {{ filteredRecipes.length }} 道菜谱</span>
-          </h2>
-        </div>
-        <div v-if="resultsLoading" class="loading-wrapper">
-          <div class="loading-spinner"></div>
-        </div>
-        <div v-else-if="filteredRecipes.length === 0" class="empty-state">
-          <el-empty description="暂无匹配的菜谱" />
-        </div>
-        <div v-else class="recipe-grid">
-          <div
-            v-for="(recipe, index) in filteredRecipes"
-            :key="recipe.id"
-            class="recipe-card-wrapper"
-            :style="{ animationDelay: `${index * 0.08}s` }"
-          >
-            <RecipeCard
-              :recipe="recipe"
-              :is-favorite="isFavorite(recipe)"
-              @click="viewRecipeDetail(recipe)"
-              @toggle-favorite="toggleFavorite(recipe)"
-            />
-          </div>
-        </div>
-      </div>
-
       <!-- 热门推荐 -->
-      <div v-if="!hasActiveFilters && !hasSearchQuery" class="section hot-section animate-fade-in-up animate-delay-5">
+      <div v-if="!hasActiveFilters && !hasSearchQuery" class="section hot-section animate-fade-in-up">
         <div class="section-header">
           <h2 class="section-title">
             <el-icon><TrendCharts /></el-icon>
             热门菜谱
             <span class="section-desc">大家都在看</span>
           </h2>
+          <el-button type="primary" size="small" @click="loadMoreHot">
+            查看更多
+            <el-icon><ArrowRight /></el-icon>
+          </el-button>
         </div>
         <div v-if="hotLoading" class="loading-wrapper">
-          <div class="loading-spinner"></div>
+          <el-icon class="is-loading"><Loading /></el-icon>
+          <span>加载中...</span>
         </div>
         <div v-else class="recipe-grid">
           <div
@@ -310,12 +371,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Search, Sunny, Moon, Food, TrendCharts, Timer, Star, Clock, HeartFilled, List, Heart, Globe } from '@element-plus/icons-vue'
+import {
+  Search, Sunny, Moon, Food, TrendCharts, Timer, Star, Clock, HeartFilled,
+  List, Heart, RefreshRight, Filter, Loading, ArrowRight
+} from '@element-plus/icons-vue'
 import { recipeApi, type Recipe } from '@/api/recipes'
+import RecipeCard from '@/components/RecipeCard.vue'
 
 const store = useStore()
 const router = useRouter()
@@ -326,6 +391,48 @@ const showSearchHistory = ref(false)
 const selectedIngredients = ref<string[]>([])
 const selectedDifficulty = ref('')
 const selectedTime = ref('')
+const selectedMinRating = ref(0)
+const selectedSort = ref('created_at')
+
+// 排序选项
+const sortOptions = [
+  { label: '最新发布', value: 'created_at' },
+  { label: '最多点赞', value: 'likes_count' },
+  { label: '最高评分', value: 'ratings_count' },
+  { label: '最短时间', value: 'prep_time' }
+]
+
+// 时间选项
+const timeOptions = [
+  { label: '15分钟内', value: '15' },
+  { label: '30分钟内', value: '30' },
+  { label: '1小时内', value: '60' },
+  { label: '1-2小时', value: '120' }
+]
+
+// 评分选项
+const ratingOptions = [
+  { label: '4分以上', value: 4 },
+  { label: '4.5分以上', value: 4.5 },
+  { label: '满分', value: 5 }
+]
+
+// 食材选项（包含同义词映射）
+const ingredientOptions = [
+  { label: '鸡肉', keywords: ['鸡肉', '鸡腿肉', '鸡胸肉', '鸡翅', '鸡丁'] },
+  { label: '牛肉', keywords: ['牛肉', '牛腩', '牛排', '牛肉末'] },
+  { label: '猪肉', keywords: ['猪肉', '五花肉', '排骨', '瘦肉', '里脊'] },
+  { label: '鱼', keywords: ['鱼', '鲈鱼', '鲫鱼', '鲤鱼', '草鱼'] },
+  { label: '虾', keywords: ['虾', '虾仁', '大虾', '基围虾'] },
+  { label: '鸡蛋', keywords: ['鸡蛋', '蛋'] },
+  { label: '豆腐', keywords: ['豆腐', '嫩豆腐', '老豆腐'] },
+  { label: '青菜', keywords: ['青菜', '西兰花', '菠菜', '白菜', '油菜'] },
+  { label: '土豆', keywords: ['土豆', '马铃薯'] },
+  { label: '番茄', keywords: ['番茄', '西红柿'] }
+]
+
+// 难度选项
+const difficulties = ['简单', '中等', '困难']
 
 // 数据
 const dailyLoading = ref(false)
@@ -334,24 +441,7 @@ const resultsLoading = ref(false)
 const allRecipes = ref<Recipe[]>([])
 const dailyRecommendations = ref<Recipe[]>([])
 const hotRecipes = ref<Recipe[]>([])
-
-// 选项
-const ingredients = ['鸡肉', '牛肉', '猪肉', '鱼', '虾', '鸡蛋', '豆腐', '青菜', '土豆', '番茄']
-const difficulties = ['简单', '中等', '困难']
-const timeOptions = [
-  { label: '15分钟内', value: '15' },
-  { label: '30分钟内', value: '30' },
-  { label: '1小时内', value: '60' },
-  { label: '1小时以上', value: '60+' }
-]
-const cuisineOptions = ['全部', '中餐', '西餐', '日料', '韩餐', '东南亚', '其他']
-const sceneOptions = ['全部', '早餐', '午餐', '晚餐', '下午茶', '宵夜', '便当']
-const tasteOptions = ['全部', '清淡', '辣', '酸甜', '咸鲜', '酱香', '其他']
-
-// 当前选择
-const selectedCuisine = ref('全部')
-const selectedScene = ref('全部')
-const selectedTaste = ref('全部')
+const filteredRecipes = ref<Recipe[]>([])
 
 // 计算属性
 const isDarkMode = computed(() => store.getters.isDarkMode)
@@ -363,97 +453,21 @@ const hasSearchQuery = computed(() => searchQuery.value.trim().length > 0)
 const hasActiveFilters = computed(() => 
   selectedIngredients.value.length > 0 || 
   selectedDifficulty.value.length > 0 || 
-  selectedTime.value.length > 0
+  selectedTime.value !== '' ||
+  selectedMinRating.value > 0
 )
-
-const showDailyRecommend = computed(() => !hasActiveFilters.value && !hasSearchQuery.value)
-
-const filteredRecipes = computed(() => {
-  let result = [...allRecipes.value]
-  
-  // 搜索过滤
-  if (hasSearchQuery.value) {
-    const query = searchQuery.value.toLowerCase()
-    result = result.filter(r => 
-      r.title.toLowerCase().includes(query) ||
-      r.ingredients?.toLowerCase().includes(query) ||
-      r.description?.toLowerCase().includes(query)
-    )
-  }
-  
-  // 菜系过滤 (模拟)
-  if (selectedCuisine.value !== '全部') {
-    result = result.filter(r => {
-      // 简单的模拟分类逻辑
-      const title = r.title.toLowerCase()
-      if (selectedCuisine.value === '中餐') {
-        return !['牛排', 'pizza', 'pasta', '寿司', '刺身'].some(key => title.includes(key))
-      } else if (selectedCuisine.value === '西餐') {
-        return ['牛排', 'pizza', '意大利', '意面', '意式'].some(key => title.includes(key))
-      } else if (selectedCuisine.value === '日料') {
-        return ['寿司', '刺身', '日式', '日本', '天妇罗'].some(key => title.includes(key))
-      }
-      return true
-    })
-  }
-  
-  // 场景过滤 (模拟)
-  if (selectedScene.value !== '全部') {
-    result = result.filter(r => {
-      const title = r.title.toLowerCase()
-      if (selectedScene.value === '早餐') {
-        return ['蛋', '牛奶', '面包', '粥', '早餐'].some(key => title.includes(key))
-      } else if (selectedScene.value === '晚餐' || selectedScene.value === '午餐') {
-        return !['蛋', '牛奶', '面包', '粥', '早餐'].some(key => title.includes(key))
-      }
-      return true
-    })
-  }
-  
-  // 口味过滤 (模拟)
-  if (selectedTaste.value !== '全部') {
-    result = result.filter(r => {
-      const desc = (r.description || '') + (r.ingredients || '')
-      if (selectedTaste.value === '辣') {
-        return desc.includes('辣') || desc.includes('辣椒')
-      } else if (selectedTaste.value === '清淡') {
-        return !desc.includes('辣') && !desc.includes('重口味')
-      } else if (selectedTaste.value === '酸甜') {
-        return desc.includes('酸') || desc.includes('甜')
-      }
-      return true
-    })
-  }
-  
-  // 难度过滤
-  if (selectedDifficulty.value) {
-    result = result.filter(r => r.difficulty === selectedDifficulty.value)
-  }
-  
-  // 时长过滤
-  if (selectedTime.value) {
-    const maxTime = selectedTime.value === '60+' ? Infinity : parseInt(selectedTime.value)
-    result = result.filter(r => {
-      const total = (r.prep_time || 0) + (r.cook_time || 0)
-      return selectedTime.value === '60+' ? total > 60 : total <= maxTime
-    })
-  }
-  
-  // 食材过滤 (简单模拟)
-  if (selectedIngredients.value.length > 0) {
-    result = result.filter(r => 
-      selectedIngredients.value.some(ing => 
-        r.ingredients?.includes(ing)
-      )
-    )
-  }
-  
-  return result
-})
 
 // 方法
 const toggleTheme = () => {
   store.commit('TOGGLE_THEME')
+}
+
+const handleSortChange = async (sortValue: string) => {
+  selectedSort.value = sortValue
+  // 如果有活动筛选条件或搜索查询，应用筛选
+  if (hasActiveFilters.value || hasSearchQuery.value) {
+    await applyFilters()
+  }
 }
 
 const handleSearch = () => {
@@ -462,6 +476,7 @@ const handleSearch = () => {
     store.commit('ADD_SEARCH_HISTORY', query)
   }
   showSearchHistory.value = false
+  applyFilters()
 }
 
 const useHistorySearch = (keyword: string) => {
@@ -474,6 +489,11 @@ const clearSearchHistory = () => {
   window.location.reload()
 }
 
+const clearSearch = () => {
+  searchQuery.value = ''
+  applyFilters()
+}
+
 const toggleIngredient = (ingredient: string) => {
   const index = selectedIngredients.value.indexOf(ingredient)
   if (index !== -1) {
@@ -483,14 +503,81 @@ const toggleIngredient = (ingredient: string) => {
   }
 }
 
+const getTimeLabel = (value: string) => {
+  const time = timeOptions.find(t => t.value === value)
+  return time ? time.label : value
+}
+
+const getSortLabel = (value: string) => {
+  const sort = sortOptions.find(s => s.value === value)
+  return sort ? sort.label : value
+}
+
+const applyFilters = async () => {
+  resultsLoading.value = true
+  try {
+    const query = {
+      page: 1,
+      per_page: 50,
+      search: searchQuery.value.trim() || undefined,
+      difficulty: selectedDifficulty.value || undefined,
+      sort_by: selectedSort.value || 'created_at',
+      sort_order: selectedSort.value === 'prep_time' ? 'asc' : 'desc'
+    }
+
+    // 处理时间筛选（前端过滤）
+    const response = await recipeApi.getRecipes(query)
+    let recipes = response.recipes || []
+
+    // 时间筛选（前端处理，因为后端只支持max时间）
+    if (selectedTime.value) {
+      const maxTime = parseInt(selectedTime.value as string)
+      recipes = recipes.filter(r => {
+        const total = (r.prep_time || 0) + (r.cook_time || 0)
+        return total <= maxTime
+      })
+    }
+
+    // 食材筛选（前端处理，使用关键词匹配）
+    if (selectedIngredients.value.length > 0) {
+      recipes = recipes.filter(r => {
+        const ingredientsText = r.ingredients || ''
+        return selectedIngredients.value.some(selectedIng => {
+          // 查找选中食材的关键词列表
+          const ingOption = ingredientOptions.find(opt => opt.label === selectedIng)
+          if (!ingOption) return false
+          // 检查任一关键词是否在食材文本中
+          return ingOption.keywords.some(keyword => ingredientsText.includes(keyword))
+        })
+      })
+    }
+
+    // 评分筛选（前端处理，因为后端没有这个字段）
+    if (selectedMinRating.value > 0) {
+      recipes = recipes.filter(r =>
+        (r as any).stats?.avg_rating >= selectedMinRating.value
+      )
+    }
+
+    filteredRecipes.value = recipes
+    console.log('筛选结果:', recipes.length, '条')
+    console.log('筛选后菜谱数据:', recipes)
+  } catch (error: any) {
+    console.error('筛选失败:', error)
+    ElMessage.error('筛选失败')
+  } finally {
+    resultsLoading.value = false
+  }
+}
+
 const resetFilters = () => {
   searchQuery.value = ''
   selectedIngredients.value = []
   selectedDifficulty.value = ''
   selectedTime.value = ''
-  selectedCuisine.value = '全部'
-  selectedScene.value = '全部'
-  selectedTaste.value = '全部'
+  selectedMinRating.value = 0
+  selectedSort.value = 'created_at'
+  filteredRecipes.value = []
 }
 
 const isFavorite = (recipe: Recipe) => {
@@ -537,31 +624,39 @@ const formatTimeDisplay = (prepTime?: number, cookTime?: number) => {
 
 const fetchAllRecipes = async () => {
   try {
-    console.log('=== Fetching recipes ===')
-    console.log('Token exists:', !!sessionStorage.getItem('access_token'))
-    console.log('User:', sessionStorage.getItem('user'))
-    
     const response = await recipeApi.getRecipes({ page: 1, per_page: 100 })
-    
-    console.log('=== Recipes response ===')
-    console.log('Response:', response)
-    console.log('Recipes count:', response?.recipes?.length)
-    
     allRecipes.value = response.recipes || []
     dailyRecommendations.value = allRecipes.value.slice(0, 4)
-    hotRecipes.value = allRecipes.value.slice(0, 8).sort(() => Math.random() - 0.5)
   } catch (error: any) {
-    console.error('=== 获取菜谱失败 ===')
-    console.error('Error:', error)
-    console.error('Error message:', error.message)
-    console.error('Error response:', error.response)
-    console.error('Error config:', error.config)
+    console.error('获取菜谱失败:', error)
   }
+}
+
+const fetchHotRecipes = async () => {
+  hotLoading.value = true
+  try {
+    // 使用后端API获取热门菜谱
+    const response = await recipeApi.getHotRecipes(1, 8)
+    hotRecipes.value = response.recipes || []
+  } catch (error: any) {
+    console.error('获取热门菜谱失败:', error)
+    // 如果API失败，使用本地数据
+    hotRecipes.value = allRecipes.value.slice(0, 8)
+  } finally {
+    hotLoading.value = false
+  }
+}
+
+const loadMoreHot = () => {
+  // 可以导航到专门的热门菜谱页面
+  selectedSort.value = 'likes_count'
+  applyFilters()
 }
 
 onMounted(() => {
   fetchAllRecipes()
-  
+  fetchHotRecipes()
+
   // 点击外部关闭搜索历史
   document.addEventListener('click', (e) => {
     const target = e.target as HTMLElement
@@ -618,7 +713,7 @@ onMounted(() => {
   top: 50%;
   transform: translateY(-50%);
   font-size: 20px;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
 }
 
 .search-history {
@@ -626,19 +721,19 @@ onMounted(() => {
   top: 100%;
   left: 0;
   right: 0;
-  margin-top: 8px;
   background: var(--bg-card);
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-lg);
-  padding: 16px;
-  z-index: 100;
+  box-shadow: var(--shadow-md);
+  padding: 12px;
+  z-index: 10;
+  margin-top: 8px;
 }
 
 .history-title {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   font-size: 14px;
   color: var(--text-secondary);
 }
@@ -651,47 +746,47 @@ onMounted(() => {
 
 .history-tag {
   cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.history-tag:hover {
-  background: var(--accent-primary) !important;
-  color: white;
 }
 
 .search-btn {
-  padding: 14px 32px;
-  border-radius: var(--radius-lg);
-  font-weight: 600;
+  padding: 14px 24px;
+  font-size: 16px;
 }
 
 .theme-btn {
-  padding: 14px;
-  border-radius: var(--radius-lg);
+  padding: 14px 16px;
 }
 
-/* 筛选区 */
+/* 筛选区域 */
 .filters-section {
-  margin-bottom: 32px;
+  margin-bottom: 24px;
 }
 
 .filter-card {
   background: var(--bg-card);
   border-radius: var(--radius-lg);
   padding: 20px;
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-sm);
 }
 
 .filter-row {
   display: flex;
-  flex-wrap: wrap;
   gap: 24px;
   margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.filter-row:last-child {
+  margin-bottom: 0;
 }
 
 .filter-group {
   flex: 1;
-  min-width: 300px;
+  min-width: 200px;
+}
+
+.filter-group.full-width {
+  flex-basis: 100%;
 }
 
 .filter-label {
@@ -699,9 +794,9 @@ onMounted(() => {
   align-items: center;
   gap: 6px;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-secondary);
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .filter-tags {
@@ -710,32 +805,96 @@ onMounted(() => {
   gap: 8px;
 }
 
-.ingredient-tag,
-.difficulty-tag,
-.time-tag {
+/* 标签样式 */
+.filter-tags :deep(.el-tag) {
   cursor: pointer;
-  padding: 8px 16px;
-  border-radius: var(--radius-md);
-  transition: all var(--transition-base);
+  transition: all 0.2s ease;
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
 }
 
-.ingredient-tag.active,
-.difficulty-tag.active,
-.time-tag.active {
-  background: var(--accent-gradient) !important;
+.filter-tags :deep(.el-tag.active) {
+  border-color: var(--accent-primary);
+  background: var(--accent-primary);
   color: white;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.filter-tags :deep(.el-tag:hover) {
+  transform: translateY(-1px);
+}
+
+.sort-tag.active {
+  font-weight: 500;
+}
+
+.difficulty-tag.active {
+  font-weight: 500;
+}
+
+.ingredient-tag.active {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: white;
+}
+
+.time-tag.active {
+  background: #e6a23c;
+  border-color: #e6a23c;
+  color: white;
+}
+
+.rating-tag.active {
+  background: #f56c6c;
+  border-color: #f56c6c;
+  color: white;
 }
 
 .filter-actions {
   display: flex;
   justify-content: flex-end;
-  padding-top: 12px;
+  gap: 12px;
+  padding-top: 16px;
   border-top: 1px solid var(--border-color);
+  margin-top: 16px;
 }
 
-/* 主内容区 */
+/* 筛选结果统计 */
+.results-header {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+.results-info h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px 0;
+  font-size: 18px;
+  color: var(--text-primary);
+}
+
+.results-count {
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-weight: normal;
+  margin-left: 8px;
+}
+
+.active-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.filter-chip {
+  margin: 0;
+}
+
+/* 内容区域 */
 .main-content {
   display: flex;
   flex-direction: column;
@@ -743,10 +902,7 @@ onMounted(() => {
 }
 
 .section {
-  background: var(--bg-card);
-  border-radius: var(--radius-lg);
-  padding: 24px;
-  box-shadow: var(--shadow-md);
+  margin-bottom: 8px;
 }
 
 .section-header {
@@ -759,105 +915,50 @@ onMounted(() => {
 .section-title {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 20px;
-  font-weight: 700;
+  gap: 8px;
   margin: 0;
+  font-size: 20px;
+  color: var(--text-primary);
 }
 
 .section-desc {
   font-size: 14px;
-  font-weight: 400;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
+  font-weight: normal;
   margin-left: 8px;
 }
 
-/* 网格 */
+/* 加载状态 */
+.loading-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 12px;
+  color: var(--text-secondary);
+}
+
+.loading-wrapper .el-icon {
+  font-size: 32px;
+}
+
+/* 空状态 */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+/* 菜谱网格 */
 .recipe-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
 }
 
 .recipe-card-wrapper {
-  animation: fadeInUp 0.5s ease-out both;
+  animation: fadeInUp 0.5s ease forwards;
 }
-
-/* 滚动列表 */
-.recipe-scroll {
-  display: flex;
-  gap: 16px;
-  overflow-x: auto;
-  padding-bottom: 8px;
-}
-
-.recipe-scroll::-webkit-scrollbar {
-  height: 6px;
-}
-
-.mini-recipe-card {
-  flex-shrink: 0;
-  width: 180px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  cursor: pointer;
-  transition: all var(--transition-base);
-}
-
-.mini-recipe-card:hover {
-  transform: translateY(-4px);
-}
-
-.mini-img {
-  width: 100%;
-  height: 120px;
-  object-fit: cover;
-  border-radius: var(--radius-md);
-}
-
-.mini-info {
-  padding: 0 4px;
-}
-
-.mini-title {
-  font-size: 14px;
-  font-weight: 600;
-  margin: 0 0 4px 0;
-  color: var(--text-primary);
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.mini-time {
-  font-size: 12px;
-  color: var(--text-tertiary);
-}
-
-/* 加载 */
-.loading-wrapper {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 60px 0;
-}
-
-.empty-state {
-  padding: 60px 0;
-}
-
-/* 动画 */
-.animate-fade-in-up {
-  animation: fadeInUp 0.5s ease-out both;
-}
-
-.animate-delay-1 { animation-delay: 0.1s; }
-.animate-delay-2 { animation-delay: 0.2s; }
-.animate-delay-3 { animation-delay: 0.3s; }
-.animate-delay-4 { animation-delay: 0.4s; }
-.animate-delay-5 { animation-delay: 0.5s; }
 
 @keyframes fadeInUp {
   from {
@@ -870,37 +971,78 @@ onMounted(() => {
   }
 }
 
-/* 响应式 */
-@media (max-width: 1024px) {
-  .recipe-grid {
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  }
+/* 历史记录滚动 */
+.recipe-scroll {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  padding: 8px 0;
+  scroll-snap-type: x mandatory;
 }
 
+.mini-recipe-card {
+  flex: 0 0 160px;
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  scroll-snap-align: start;
+}
+
+.mini-recipe-card:hover {
+  transform: scale(1.05);
+}
+
+.mini-img {
+  width: 100%;
+  height: 100px;
+  object-fit: cover;
+}
+
+.mini-info {
+  padding: 8px 12px;
+}
+
+.mini-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mini-time {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* 响应式设计 */
 @media (max-width: 768px) {
   .discover-container {
-    padding: 16px;
+    padding: 12px;
   }
-  
-  .search-wrapper {
+
+  .filter-row {
     flex-direction: column;
+    gap: 16px;
   }
-  
-  .search-btn {
-    width: 100%;
-  }
-  
+
   .filter-group {
     min-width: 100%;
   }
-  
+
   .recipe-grid {
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 12px;
+    grid-template-columns: 1fr;
+    gap: 16px;
   }
-  
-  .section {
-    padding: 16px;
+
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
   }
 }
 </style>
