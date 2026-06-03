@@ -893,15 +893,51 @@ def remove_favorite(favorite_id):
         return jsonify({'error': str(e)}), 500
 
 # ============= 评论管理 API =============
-@app.route('/api/recipes/<int:recipe_id>/comments', methods=['GET'])
-def get_recipe_comments(recipe_id):
-    """获取菜谱的评论"""
+@app.route('/api/recipes/<int:recipe_id>/comments/stats', methods=['GET'])
+@app.route('/api/recipes/<int:recipe_id>/comments/stats/', methods=['GET'])
+def get_recipe_comment_stats(recipe_id):
+    """获取菜谱的评论统计（包含评分分布）"""
     try:
-        # 获取顶级评论（不包含回复）
-        parent_comments = Comment.query.filter_by(
+        # 获取评分分布
+        ratings = Rating.query.filter_by(recipe_id=recipe_id).all()
+        rating_distribution = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
+        
+        if ratings:
+            average_score = sum(r.score for r in ratings) / len(ratings)
+            for r in ratings:
+                if 1 <= r.score <= 5:
+                    rating_distribution[r.score] += 1
+        else:
+            average_score = 0
+            
+        # 获取评论总数
+        comment_count = Comment.query.filter_by(recipe_id=recipe_id).count()
+        
+        return jsonify({
+            'comment_count': comment_count,
+            'rating_count': len(ratings),
+            'average_score': round(average_score, 1),
+            'rating_distribution': rating_distribution
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/recipes/<int:recipe_id>/comments', methods=['GET'])
+@app.route('/api/recipes/<int:recipe_id>/comments/', methods=['GET'])
+def get_recipe_comments(recipe_id):
+    """获取菜谱的评论（分页）"""
+    try:
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 10, type=int)
+        
+        # 获取顶级评论（不包含回复）并分页
+        pagination = Comment.query.filter_by(
             recipe_id=recipe_id,
             parent_id=None
-        ).order_by(Comment.created_at.desc()).all()
+        ).order_by(Comment.created_at.desc()).paginate(
+            page=page, per_page=per_page, error_out=False
+        )
 
         # 为每个评论构建回复
         def build_comment_tree(comment):
@@ -910,32 +946,62 @@ def get_recipe_comments(recipe_id):
             result['replies'] = [reply.to_dict() for reply in replies]
             return result
 
-        comments = [build_comment_tree(comment) for comment in parent_comments]
-        return jsonify(comments)
+        comments = [build_comment_tree(comment) for comment in pagination.items]
+        
+        return jsonify({
+            'comments': comments,
+            'total': pagination.total,
+            'pages': pagination.pages,
+            'current_page': page
+        })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/recipes/<int:recipe_id>/comments', methods=['POST'])
-def add_comment():
-    """添加评论"""
+@app.route('/api/recipes/<int:recipe_id>/comments/', methods=['POST'])
+@require_auth
+def add_comment(recipe_id):
+    """添加评论（可选评分）"""
     try:
         data = request.get_json()
 
-        if not data or not data.get('content') or not data.get('user_id') or not data.get('recipe_id'):
-            return jsonify({'error': '评论内容、用户ID和菜谱ID不能为空'}), 400
+        if not data or not data.get('content'):
+            return jsonify({'error': '评论内容不能为空'}), 400
 
-        # 检查用户和菜谱是否存在
-        user = User.query.get_or_404(data['user_id'])
-        recipe = Recipe.query.get_or_404(data['recipe_id'])
+        # 检查菜谱是否存在
+        recipe = Recipe.query.get_or_404(recipe_id)
 
+        # 创建评论
         comment = Comment(
             content=data['content'],
-            user_id=data['user_id'],
-            recipe_id=data['recipe_id'],
+            user_id=g.current_user.id,
+            recipe_id=recipe_id,
             parent_id=data.get('parent_id')
         )
 
         db.session.add(comment)
+        
+        # 如果提供了评分，则添加评分
+        if data.get('rating') is not None:
+            score = data['rating']
+            if 1 <= score <= 5:
+                # 检查是否已评分
+                existing = Rating.query.filter_by(
+                    user_id=g.current_user.id,
+                    recipe_id=recipe_id
+                ).first()
+                
+                if existing:
+                    existing.score = score
+                    existing.updated_at = datetime.utcnow()
+                else:
+                    rating = Rating(
+                        score=score,
+                        user_id=g.current_user.id,
+                        recipe_id=recipe_id
+                    )
+                    db.session.add(rating)
+        
         db.session.commit()
 
         return jsonify({

@@ -537,12 +537,25 @@ const formatTimeDisplay = (prepTime?: number, cookTime?: number) => {
 
 const fetchAllRecipes = async () => {
   try {
+    console.log('=== Fetching recipes ===')
+    console.log('Token exists:', !!sessionStorage.getItem('access_token'))
+    console.log('User:', sessionStorage.getItem('user'))
+    
     const response = await recipeApi.getRecipes({ page: 1, per_page: 100 })
+    
+    console.log('=== Recipes response ===')
+    console.log('Response:', response)
+    console.log('Recipes count:', response?.recipes?.length)
+    
     allRecipes.value = response.recipes || []
     dailyRecommendations.value = allRecipes.value.slice(0, 4)
     hotRecipes.value = allRecipes.value.slice(0, 8).sort(() => Math.random() - 0.5)
-  } catch (error) {
-    console.error('获取菜谱失败:', error)
+  } catch (error: any) {
+    console.error('=== 获取菜谱失败 ===')
+    console.error('Error:', error)
+    console.error('Error message:', error.message)
+    console.error('Error response:', error.response)
+    console.error('Error config:', error.config)
   }
 }
 

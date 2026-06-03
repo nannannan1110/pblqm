@@ -12,11 +12,10 @@ def create_app():
     # 初始化扩展
     db.init_app(app)
 
-    # 配置CORS - 支持credentials并允许多个来源
-    cors_origins = os.environ.get('CORS_ORIGINS', 'http://localhost:8080,http://127.0.0.1:8080')
+    # 配置CORS
     CORS(app,
-         resources={r"/api/*": {"origins": cors_origins.split(',')}},
-         supports_credentials=True,
+         resources={r"/api/*": {"origins": ["http://localhost:8080", "http://127.0.0.1:8080"]}},
+         supports_credentials=False,
          allow_headers=['Content-Type', 'Authorization'],
          methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'])
 

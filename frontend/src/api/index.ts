@@ -5,29 +5,18 @@ import { ElMessage } from 'element-plus'
 const api = axios.create({
   baseURL: 'http://localhost:5000/api',
   timeout: 30000, // 增加到30秒
-  withCredentials: false, // CORS credentials
+  withCredentials: false, // 暂时禁用凭证以测试CORS问题
   headers: {
     'Content-Type': 'application/json'
   }
 })
 
-// 请求拦截器 - 添加JWT token和用户ID
+// 请求拦截器 - 添加JWT token
 api.interceptors.request.use(
   (config) => {
     const token = sessionStorage.getItem('access_token')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
-    }
-
-    // 添加 X-User-ID 头（后端需要这个来验证用户身份）
-    const userStr = sessionStorage.getItem('user')
-    if (userStr) {
-      try {
-        const user = JSON.parse(userStr)
-        config.headers['X-User-ID'] = user.id.toString()
-      } catch {
-        // 忽略
-      }
     }
 
     // 添加请求日志

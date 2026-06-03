@@ -181,7 +181,15 @@ const handleLogin = async () => {
       password: loginForm.password
     }
 
+    console.log('=== Login Request ===')
+    console.log('Login data:', loginData)
+    
     const response = await authApi.login(loginData)
+    
+    console.log('=== Login Response ===')
+    console.log('Response:', response)
+    console.log('Access token:', response?.access_token)
+    console.log('User:', response?.user)
 
     // 验证登录类型是否匹配
     if (loginType.value === 'admin' && !response.user.is_admin) {
@@ -288,52 +296,73 @@ onMounted(() => {
   padding: 40px 20px;
   min-height: 100vh;
   width: 100%;
-  background: url('http://localhost:5000/static/images/login-bg.jpg') center center / cover no-repeat;
+  background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%),
+              url('http://localhost:5000/static/images/login-bg.jpg') center center / cover no-repeat;
   background-attachment: fixed;
+  position: relative;
+}
+
+.login-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.5) 100%);
+  pointer-events: none;
 }
 
 .login-card {
-  width: 450px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-  border-radius: 12px;
+  width: 420px;
+  box-shadow: var(--shadow-xl);
+  border-radius: var(--radius-xl);
   overflow: hidden;
-  backdrop-filter: blur(10px);
-  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  background: var(--bg-glass);
+  border: 1px solid var(--border-light);
+  position: relative;
+  z-index: 1;
 }
 
 .card-header {
   text-align: center;
-  padding-bottom: 20px;
-  border-bottom: 2px solid #f0f2f5;
+  padding: 32px 24px 24px;
+  border-bottom: 1px solid var(--border-light);
+  background: linear-gradient(135deg, rgba(102,126,234,0.05) 0%, rgba(118,75,162,0.05) 100%);
 }
 
 .card-header h2 {
   margin: 0 0 8px 0;
-  color: #303133;
-  font-size: 28px;
-  font-weight: 600;
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-size: var(--text-3xl);
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 .card-header .subtitle {
   margin: 0;
-  color: #909399;
-  font-size: 16px;
-  font-weight: 400;
+  color: var(--text-tertiary);
+  font-size: var(--text-base);
 }
 
 /* 登录类型选择器 */
 .login-type-selector {
-  margin-bottom: 30px;
+  margin: 24px 20px 0;
 }
 
 .type-group {
   display: flex;
   width: 100%;
   justify-content: center;
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   overflow: hidden;
-  background: #f5f7fa;
+  background: var(--bg-secondary);
   padding: 4px;
+  gap: 4px;
 }
 
 .type-btn {
@@ -342,68 +371,67 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 12px 20px;
+  padding: 12px 16px;
   border: none;
   background: transparent;
-  color: #606266;
-  font-size: 15px;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
   font-weight: 500;
-  border-radius: 6px;
-  transition: all 0.3s ease;
+  border-radius: var(--radius-md);
+  transition: all var(--transition-base);
   cursor: pointer;
 }
 
 .type-btn:hover {
-  background: rgba(64, 158, 255, 0.1);
-  color: #409eff;
+  background: var(--bg-hover);
+  color: var(--accent-primary);
 }
 
 .type-btn.active {
-  background: #409eff;
-  color: white;
-  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.3);
+  background: var(--accent-gradient);
+  color: var(--text-inverse);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.35);
 }
 
 .type-btn .el-icon {
   font-size: 18px;
 }
 
-.type-btn span {
-  font-size: 15px;
-}
-
 /* 登录表单 */
 .login-form {
-  padding: 0 20px;
+  padding: 24px 24px 32px;
 }
 
 .login-form :deep(.el-form-item__label) {
   font-weight: 500;
-  color: #303133;
+  color: var(--text-primary);
 }
 
 .login-form :deep(.el-input__wrapper) {
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-base);
+  border: 1px solid var(--border-light);
 }
 
 .login-form :deep(.el-input__wrapper:hover) {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: var(--border-color);
+  box-shadow: var(--shadow-md);
 }
 
 .login-form :deep(.el-input__wrapper.is-focus) {
-  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
 }
 
 .login-form :deep(.el-input__inner) {
-  font-size: 16px;
-  height: 48px;
-  line-height: 48px;
+  font-size: var(--text-base);
+  height: 44px;
+  line-height: 44px;
 }
 
 .login-form :deep(.el-form-item__error) {
-  font-size: 13px;
+  font-size: var(--text-xs);
   padding-top: 4px;
 }
 
@@ -412,17 +440,27 @@ onMounted(() => {
 }
 
 .admin-notice :deep(.el-alert__content) {
-  font-size: 14px;
+  font-size: var(--text-sm);
   line-height: 1.5;
 }
 
 /* 登录按钮 */
-.el-button {
+.login-form :deep(.el-button--primary) {
+  background: var(--accent-gradient);
+  border: none;
   height: 48px;
-  font-size: 16px;
+  font-size: var(--text-base);
   font-weight: 600;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   letter-spacing: 0.5px;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.35);
+  transition: all var(--transition-base);
+}
+
+.login-form :deep(.el-button--primary:hover) {
+  background: var(--accent-gradient-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.45);
 }
 
 /* 底部链接 */
@@ -432,42 +470,41 @@ onMounted(() => {
   align-items: center;
   gap: 16px;
   margin-top: 24px;
-  padding: 0 20px;
+  padding: 0 24px;
 }
 
 .register-link,
 .forgot-link {
-  color: #606266;
+  color: var(--text-secondary);
   text-decoration: none;
-  font-size: 14px;
-  transition: color 0.3s ease;
+  font-size: var(--text-sm);
+  transition: all var(--transition-base);
 }
 
-.register-link:hover,
+.register-link:hover {
+  color: var(--accent-primary);
+  text-decoration: none;
+}
+
 .forgot-link:hover {
-  color: #409eff;
-  text-decoration: underline;
+  color: var(--accent-primary);
 }
 
 .separator {
-  color: #dcdfe6;
-  font-size: 14px;
+  color: var(--border-color);
+  font-size: var(--text-sm);
 }
 
 /* 登录提示 */
 .login-tips {
   width: 100%;
-  max-width: 450px;
+  max-width: 420px;
   margin-top: 20px;
 }
 
 .login-tips :deep(.el-alert) {
-  border-radius: 8px;
-}
-
-.login-tips :deep(.el-alert__content) {
-  font-size: 14px;
-  line-height: 1.6;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-light);
 }
 
 .login-tips :deep(.el-alert__content p) {

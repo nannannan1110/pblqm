@@ -88,33 +88,39 @@ const handleToggleFavorite = () => {
 <style scoped>
 .recipe-card {
   background: var(--bg-card);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   overflow: hidden;
   cursor: pointer;
   transition: all var(--transition-base);
   box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-light);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .recipe-card:hover {
-  transform: translateY(-8px);
+  transform: translateY(-6px);
   box-shadow: var(--shadow-lg);
+  border-color: var(--accent-primary);
 }
 
 .card-image-wrapper {
   position: relative;
   height: 200px;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .card-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform var(--transition-slow);
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .recipe-card:hover .card-image {
-  transform: scale(1.1);
+  transform: scale(1.08);
 }
 
 .card-overlay {
@@ -123,7 +129,7 @@ const handleToggleFavorite = () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.7) 100%);
+  background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.6) 100%);
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -138,60 +144,67 @@ const handleToggleFavorite = () => {
 
 .view-btn {
   border: none;
+  background: var(--accent-gradient);
+  color: white;
+  border-radius: var(--radius-full);
+  font-weight: 500;
 }
 
 .difficulty-badge {
   position: absolute;
-  top: 12px;
-  right: 12px;
+  top: 14px;
+  right: 14px;
   padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 12px;
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
   font-weight: 600;
   color: white;
-  backdrop-filter: blur(8px);
-  box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow-md);
+  letter-spacing: 0.5px;
 }
 
 .difficulty-badge.easy {
-  background: linear-gradient(135deg, rgba(103, 194, 58, 0.95), rgba(76, 175, 80, 0.95));
+  background: linear-gradient(135deg, #10b981, #059669);
 }
 
 .difficulty-badge.medium {
-  background: linear-gradient(135deg, rgba(230, 162, 60, 0.95), rgba(255, 152, 0, 0.95));
+  background: linear-gradient(135deg, #f59e0b, #d97706);
 }
 
 .difficulty-badge.hard {
-  background: linear-gradient(135deg, rgba(245, 108, 108, 0.95), rgba(244, 67, 54, 0.95));
+  background: linear-gradient(135deg, #ef4444, #dc2626);
 }
 
 .difficulty-badge.unknown {
-  background: linear-gradient(135deg, rgba(144, 147, 153, 0.95), rgba(158, 158, 158, 0.95));
+  background: linear-gradient(135deg, #6b7280, #4b5563);
 }
 
 .favorite-btn {
   position: absolute;
-  top: 12px;
-  left: 12px;
-  width: 36px;
-  height: 36px;
+  top: 14px;
+  left: 14px;
+  width: 38px;
+  height: 38px;
   border: none;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all var(--transition-base);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
 }
 
 .favorite-btn:hover {
-  transform: scale(1.1);
+  transform: scale(1.12);
+  background: white;
 }
 
 .favorite-btn.active {
-  background: linear-gradient(135deg, #f56c6c, #f093fb);
+  background: linear-gradient(135deg, #ef4444, #f97316);
   color: white;
 }
 
@@ -200,12 +213,15 @@ const handleToggleFavorite = () => {
 }
 
 .card-content {
-  padding: 18px;
+  padding: 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .card-title {
   margin: 0 0 10px 0;
-  font-size: 16px;
+  font-size: var(--text-lg);
   font-weight: 700;
   color: var(--text-primary);
   line-height: 1.4;
@@ -214,6 +230,7 @@ const handleToggleFavorite = () => {
   -webkit-box-orient: vertical;
   overflow: hidden;
   transition: color var(--transition-base);
+  letter-spacing: -0.01em;
 }
 
 .recipe-card:hover .card-title {
@@ -221,8 +238,8 @@ const handleToggleFavorite = () => {
 }
 
 .card-desc {
-  margin: 0 0 14px 0;
-  font-size: 13px;
+  margin: 0 0 16px 0;
+  font-size: var(--text-sm);
   color: var(--text-secondary);
   line-height: 1.6;
   display: -webkit-box;
@@ -230,25 +247,29 @@ const handleToggleFavorite = () => {
   -webkit-box-orient: vertical;
   overflow: hidden;
   min-height: 40px;
+  flex: 1;
 }
 
 .card-meta {
   display: flex;
-  gap: 16px;
-  padding-top: 14px;
+  gap: 20px;
+  padding-top: 16px;
   border-top: 1px solid var(--border-light);
+  margin-top: auto;
 }
 
 .meta-item {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
+  font-size: var(--text-sm);
   color: var(--text-tertiary);
+  font-weight: 500;
 }
 
 .meta-item .el-icon {
-  font-size: 15px;
+  font-size: 16px;
+  color: var(--text-tertiary);
 }
 
 @media (max-width: 768px) {

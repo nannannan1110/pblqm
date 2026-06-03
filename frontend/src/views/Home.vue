@@ -89,22 +89,22 @@ export default defineComponent({
 }
 
 .hero-section h1 {
-  font-size: 56px;
+  font-size: 64px;
   font-weight: 800;
-  color: #303133;
-  margin: 0 0 20px 0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  color: var(--text-primary);
+  margin: 0 0 24px 0;
+  background: var(--accent-gradient);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  letter-spacing: -0.02em;
-  text-shadow: 0 8px 30px rgba(102, 126, 234, 0.25);
+  letter-spacing: -0.03em;
+  line-height: 1.1;
 }
 
 .hero-section p {
-  font-size: 22px;
-  color: #606266;
-  margin: 0 0 40px 0;
+  font-size: 24px;
+  color: var(--text-secondary);
+  margin: 0 0 48px 0;
   line-height: 1.6;
   font-weight: 400;
 }
@@ -117,11 +117,25 @@ export default defineComponent({
 }
 
 .hero-btn {
-  padding: 14px 36px;
-  border-radius: 12px;
-  font-size: 16px;
+  padding: 16px 40px;
+  border-radius: var(--radius-lg);
+  font-size: var(--text-base);
   font-weight: 600;
-  box-shadow: 0 10px 30px rgba(64, 158, 255, 0.25);
+  box-shadow: var(--shadow-lg);
+  letter-spacing: 0.3px;
+}
+
+.hero-btn:first-child {
+  background: var(--accent-gradient);
+  border: none;
+  color: white;
+  box-shadow: 0 8px 30px rgba(102, 126, 234, 0.4);
+}
+
+.hero-btn:first-child:hover {
+  background: var(--accent-gradient-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(102, 126, 234, 0.5);
 }
 
 /* 装饰性背景 */
@@ -139,35 +153,35 @@ export default defineComponent({
 .blob {
   position: absolute;
   border-radius: 50%;
-  filter: blur(60px);
-  opacity: 0.4;
-  animation: float 8s ease-in-out infinite;
+  filter: blur(80px);
+  opacity: 0.35;
+  animation: float 10s ease-in-out infinite;
 }
 
 .blob-1 {
-  width: 400px;
-  height: 400px;
+  width: 500px;
+  height: 500px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  top: -100px;
-  right: -100px;
+  top: -150px;
+  right: -150px;
 }
 
 .blob-2 {
-  width: 300px;
-  height: 300px;
+  width: 400px;
+  height: 400px;
   background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  bottom: -80px;
-  left: -80px;
-  animation-delay: -2s;
+  bottom: -120px;
+  left: -120px;
+  animation-delay: -3s;
 }
 
 .blob-3 {
-  width: 250px;
-  height: 250px;
+  width: 350px;
+  height: 350px;
   background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-  bottom: 20%;
-  right: 15%;
-  animation-delay: -4s;
+  bottom: 30%;
+  right: 10%;
+  animation-delay: -5s;
 }
 
 /* 按钮动画类（与App.vue一致） */

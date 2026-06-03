@@ -9,12 +9,16 @@ const adminAxios = axios.create({
   timeout: 10000,
 })
 
-// 请求拦截器 - 添加管理员权限头
+// 请求拦截器 - 添加管理员权限头和JWT token
 adminAxios.interceptors.request.use(
   (config) => {
     const currentUser = authApi.getCurrentUser()
     if (currentUser && currentUser.id) {
       config.headers['X-User-ID'] = currentUser.id.toString()
+    }
+    const token = sessionStorage.getItem('access_token')
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`
     }
     return config
   },

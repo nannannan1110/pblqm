@@ -5,13 +5,13 @@ import { type User } from './auth'
 export interface Comment {
   id: number
   content: string
-  rating: number
   user_id: number
   recipe_id: number
+  parent_id?: number
   created_at: string
   updated_at?: string
   user?: User
-  recipe?: any
+  replies?: Comment[]
 }
 
 // 评论列表响应类型
@@ -24,8 +24,9 @@ export interface CommentsResponse {
 
 // 评论统计类型
 export interface CommentStats {
-  total_comments: number
-  average_rating: number
+  comment_count: number
+  rating_count: number
+  average_score: number
   rating_distribution: {
     1: number
     2: number
@@ -38,14 +39,12 @@ export interface CommentStats {
 // 创建评论请求数据
 export interface CreateCommentRequest {
   content: string
-  rating: number
-  recipe_id: number
+  rating?: number
 }
 
 // 更新评论请求数据
 export interface UpdateCommentRequest {
   content?: string
-  rating?: number
 }
 
 // 评论相关API
@@ -57,14 +56,14 @@ export const commentApi = {
     if (query?.per_page) params.append('per_page', query.per_page.toString())
 
     const queryString = params.toString()
-    const url = queryString ? `/comments/recipe/${recipeId}?${queryString}` : `/comments/recipe/${recipeId}`
+    const url = queryString ? `/recipes/${recipeId}/comments?${queryString}` : `/recipes/${recipeId}/comments`
 
     return api.get<CommentsResponse>(url)
   },
 
   // 创建评论
-  createComment(data: CreateCommentRequest) {
-    return api.post<Comment>('/comments/', data)
+  createComment(recipeId: number, data: CreateCommentRequest) {
+    return api.post<Comment>(`/recipes/${recipeId}/comments`, data)
   },
 
   // 更新评论
@@ -77,21 +76,9 @@ export const commentApi = {
     return api.delete<{ message: string }>(`/comments/${commentId}`)
   },
 
-  // 获取用户评论列表
-  getUserComments(userId: number, query?: { page?: number; per_page?: number }) {
-    const params = new URLSearchParams()
-    if (query?.page) params.append('page', query.page.toString())
-    if (query?.per_page) params.append('per_page', query.per_page.toString())
-
-    const queryString = params.toString()
-    const url = queryString ? `/comments/user/${userId}?${queryString}` : `/comments/user/${userId}`
-
-    return api.get<CommentsResponse>(url)
-  },
-
   // 获取菜谱评论统计
   getRecipeCommentStats(recipeId: number) {
-    return api.get<CommentStats>(`/comments/recipe/${recipeId}/stats`)
+    return api.get<CommentStats>(`/recipes/${recipeId}/comments/stats`)
   }
 }
 
