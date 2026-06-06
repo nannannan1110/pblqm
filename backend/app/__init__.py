@@ -1,3 +1,2 @@
-from flask_sqlalchemy import SQLAlchemy
-
-db = SQLAlchemy()
+# 从统一的models模块导入db实例
+from models import db

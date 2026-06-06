@@ -12,9 +12,18 @@ def create_app():
     # 初始化扩展
     db.init_app(app)
 
+    # 创建所有数据库表
+    with app.app_context():
+        # 导入所有模型以确保它们被注册（从统一的models模块导入）
+        from models import User, Recipe, Comment, Post, PostLike, PostComment
+        db.create_all()
+        
+        # 初始化示例帖子数据
+        init_sample_posts()
+
     # 配置CORS
     CORS(app,
-         resources={r"/api/*": {"origins": ["http://localhost:8080", "http://127.0.0.1:8080"]}},
+         resources={r"/api/*": {"origins": ["http://localhost:8080", "http://127.0.0.1:8080", "http://localhost:8081", "http://127.0.0.1:8081", "http://localhost:8082", "http://127.0.0.1:8082"]}},
          supports_credentials=False,
          allow_headers=['Content-Type', 'Authorization'],
          methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'])
@@ -28,6 +37,7 @@ def create_app():
     from app.routes.comments import comments_bp
     from app.routes.uploads import uploads_bp
     from app.routes.admin import admin_bp
+    from app.routes.posts import posts_bp
 
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(recipes_bp, url_prefix='/api/recipes')
@@ -35,6 +45,7 @@ def create_app():
     app.register_blueprint(comments_bp, url_prefix='/api/comments')
     app.register_blueprint(uploads_bp, url_prefix='/api/uploads')
     app.register_blueprint(admin_bp, url_prefix='/api/admin')
+    app.register_blueprint(posts_bp, url_prefix='/api/posts')
 
     # 添加请求日志（跳过OPTIONS和静态文件请求）
     from flask import request, jsonify
@@ -132,6 +143,53 @@ def create_app():
         return response
 
     return app
+
+
+def init_sample_posts():
+    """初始化示例帖子数据"""
+    from models import Post
+    
+    # 检查是否已有帖子
+    if Post.query.count() > 0:
+        return
+    
+    print("Adding sample posts...")
+    
+    # 创建示例帖子
+    sample_posts = [
+        {
+            'user_id': 1,
+            'title': '第一次做手工意大利面',
+            'content': '今天尝试第一次做手工意大利面，虽然过程有点挑战，但结果非常棒！关键是要让面团充分休息。'
+        },
+        {
+            'user_id': 2,
+            'title': '完美炒饭的秘诀',
+            'content': '经过多年的实践，我总结出完美炒饭的几个要点：\n1. 使用隔夜饭\n2. 火候要大\n3. 不停翻炒\n4. 不要让锅太满\n5. 适时添加调味料'
+        },
+        {
+            'user_id': 3,
+            'title': '掌握炒菜技巧',
+            'content': '炒菜的关键在于时间和火候的控制。今天我来分享在家做出完美"锅气"的秘诀。'
+        },
+        {
+            'user_id': 1,
+            'title': '周末烘焙之旅',
+            'content': '整个周末都在烘焙！做了酸面包、可颂和一些饼干。早上新鲜出炉的香气真是太棒了！'
+        },
+        {
+            'user_id': 2,
+            'title': '亚洲融合菜谱创意',
+            'content': '我一直在尝试将亚洲风味与西方烹饪技巧相结合。这里分享一些我成功尝试过的组合。'
+        }
+    ]
+    
+    for post_data in sample_posts:
+        post = Post(**post_data)
+        db.session.add(post)
+    
+    db.session.commit()
+    print("Sample posts added successfully!")
 
 if __name__ == '__main__':
     app = create_app()

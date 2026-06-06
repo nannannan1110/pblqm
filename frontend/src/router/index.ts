@@ -40,7 +40,7 @@ const routes: Array<RouteRecordRaw> = [
     path: '/home',
     name: 'Home',
     component: () => import('@/views/RecipeDiscover.vue'),
-    meta: { requiresAuth: true } // 首页需要登录
+    beforeEnter: requireAuth
   },
   {
     path: '/login',
@@ -50,13 +50,13 @@ const routes: Array<RouteRecordRaw> = [
     path: '/recipes',
     name: 'Recipes',
     component: () => import('@/views/Recipes.vue'),
-    meta: { requiresAuth: true } // 菜谱列表需要登录
+    beforeEnter: requireAuth
   },
   {
     path: '/recipes/:id',
     name: 'RecipeDetail',
     component: () => import('@/views/RecipeDetail.vue'),
-    meta: { requiresAuth: true } // 菜谱详情需要登录
+    beforeEnter: requireAuth
   },
   // 注册页面
   {
@@ -70,41 +70,48 @@ const routes: Array<RouteRecordRaw> = [
     path: '/create-recipe',
     name: 'CreateRecipe',
     component: () => import('@/views/CreateRecipe.vue'),
-    meta: { requiresAuth: true }
+    beforeEnter: requireAuth
   },
   {
     path: '/edit-recipe/:id',
     name: 'EditRecipe',
     component: () => import('@/views/EditRecipe.vue'),
-    meta: { requiresAuth: true }
+    beforeEnter: requireAuth
   },
   // 个人资料页面
   {
     path: '/profile',
     name: 'Profile',
     component: () => import('@/views/Profile.vue'),
-    meta: { requiresAuth: true }
+    beforeEnter: requireAuth
   },
   // 我的收藏页面
   {
     path: '/favorites',
     name: 'Favorites',
     component: () => import('@/views/Favorites.vue'),
-    meta: { requiresAuth: true }
+    beforeEnter: requireAuth
   },
   // 浏览历史页面
   {
     path: '/history',
     name: 'History',
     component: () => import('@/views/History.vue'),
-    meta: { requiresAuth: true }
+    beforeEnter: requireAuth
+  },
+  // 发现页
+  {
+    path: '/discovery',
+    name: 'Discovery',
+    component: () => import('@/views/Discovery.vue'),
+    beforeEnter: requireAuth
   },
   // 我的菜谱页面
   {
     path: '/my-recipes',
     name: 'MyRecipes',
     component: () => import('@/views/MyRecipes.vue'),
-    meta: { requiresAuth: true }
+    beforeEnter: requireAuth
   },
 
   // 管理员页面

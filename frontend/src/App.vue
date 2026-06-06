@@ -28,18 +28,22 @@
               <el-icon><Collection /></el-icon>
               <span>菜谱</span>
             </el-menu-item>
-            <el-menu-item v-if="authApi.isLoggedIn()" index="/favorites">
-            <el-icon><HeartFilled /></el-icon>
-            <span>我的收藏</span>
-          </el-menu-item>
-          <el-menu-item v-if="authApi.isLoggedIn()" index="/history">
-            <el-icon><Clock /></el-icon>
-            <span>浏览历史</span>
-          </el-menu-item>
-          <el-menu-item v-if="authApi.isLoggedIn()" index="/create-recipe">
-            <el-icon><Plus /></el-icon>
-            <span>创建菜谱</span>
-          </el-menu-item>
+            <el-menu-item v-if="isLoggedIn" index="/favorites">
+              <el-icon><HeartFilled /></el-icon>
+              <span>我的收藏</span>
+            </el-menu-item>
+            <el-menu-item v-if="isLoggedIn" index="/history">
+              <el-icon><Clock /></el-icon>
+              <span>浏览历史</span>
+            </el-menu-item>
+            <el-menu-item v-if="isLoggedIn" index="/discovery">
+              <el-icon><Compass /></el-icon>
+              <span>发现</span>
+            </el-menu-item>
+            <el-menu-item v-if="isLoggedIn" index="/create-recipe">
+              <el-icon><Plus /></el-icon>
+              <span>创建菜谱</span>
+            </el-menu-item>
             <el-menu-item index="/about">
               <el-icon><InfoFilled /></el-icon>
               <span>关于</span>
@@ -53,7 +57,7 @@
             <el-icon><Sunny v-if="!isDarkMode" /><Moon v-else /></el-icon>
           </el-button>
           
-          <template v-if="authApi.isLoggedIn()">
+          <template v-if="isLoggedIn">
             <!-- 用户菜单 -->
             <el-dropdown @command="handleUserMenuCommand">
               <div class="user-info">
@@ -130,7 +134,8 @@ import {
   Sunny,
   Moon,
   HeartFilled,
-  Clock
+  Clock,
+  Compass
 } from '@element-plus/icons-vue'
 import { authApi, type User as UserType } from '@/api/auth'
 
@@ -138,6 +143,11 @@ const store = useStore()
 const route = useRoute()
 const router = useRouter()
 const currentUser = ref<UserType | null>(null)
+
+// 计算属性：实时检测登录状态
+const isLoggedIn = computed(() => {
+  return authApi.isLoggedIn()
+})
 
 const isDarkMode = computed(() => store.getters.isDarkMode)
 
@@ -206,6 +216,14 @@ const handleUserMenuCommand = async (command: string) => {
       break
   }
 }
+
+// 监听路由变化，更新登录状态
+watch(
+  () => route.path,
+  () => {
+    getCurrentUser()
+  }
+)
 
 // 页面加载时获取用户信息
 onMounted(() => {

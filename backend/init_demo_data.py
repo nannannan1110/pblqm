@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 初始化演示数据
 这个脚本用于创建和填充演示数据到数据库
@@ -6,6 +7,10 @@
 
 import os
 import sys
+import io
+
+# 设置标准输出编码为UTF-8
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 # 确保我们能找到项目模块
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -116,7 +121,7 @@ def init_database():
                     'cook_time': 10,
                     'difficulty': '简单',
                     'servings': 2,
-                    'image': 'gbjd.jpg',
+                    'image': '418b20a3838e4ae8a5808ceba994a87e.jpg',
                     'user_id': chef_user.id
                 },
                 {
@@ -128,7 +133,7 @@ def init_database():
                     'cook_time': 15,
                     'difficulty': '中等',
                     'servings': 3,
-                    'image': 'mpdf.jpg',
+                    'image': 'xhscjd.jpg',
                     'user_id': chef_user.id
                 },
                 {
@@ -140,7 +145,7 @@ def init_database():
                     'cook_time': 25,
                     'difficulty': '中等',
                     'servings': 4,
-                    'image': 'tcpdg.jpg',
+                    'image': '115febe3051840909d08205f720b23a4.jpg',
                     'user_id': chef_user.id
                 },
                 {
@@ -152,7 +157,7 @@ def init_database():
                     'cook_time': 8,
                     'difficulty': '简单',
                     'servings': 1,
-                    'image': 'dcf.jpg',
+                    'image': '93dd19494ba44895a1d5772d05024c27.jpg',
                     'user_id': admin_user.id
                 },
                 {
@@ -164,7 +169,7 @@ def init_database():
                     'cook_time': 20,
                     'difficulty': '简单',
                     'servings': 3,
-                    'image': 'kljc.jpg',
+                    'image': 'srxlh.jpg',
                     'user_id': chef_user.id
                 },
                 {
@@ -176,7 +181,7 @@ def init_database():
                     'cook_time': 12,
                     'difficulty': '简单',
                     'servings': 3,
-                    'image': 'qzly.jpg',
+                    'image': 'hsr.jpg',
                     'user_id': chef_user.id
                 },
                 {
@@ -188,7 +193,7 @@ def init_database():
                     'cook_time': 35,
                     'difficulty': '中等',
                     'servings': 4,
-                    'image': 'hsgp.jpg',
+                    'image': 'xhscjd.jpg',
                     'user_id': admin_user.id
                 },
                 {
@@ -200,7 +205,7 @@ def init_database():
                     'cook_time': 20,
                     'difficulty': '困难',
                     'servings': 4,
-                    'image': 'scy.jpg',
+                    'image': '418b20a3838e4ae8a5808ceba994a87e.jpg',
                     'user_id': chef_user.id
                 },
                 {
@@ -212,7 +217,7 @@ def init_database():
                     'cook_time': 8,
                     'difficulty': '中等',
                     'servings': 3,
-                    'image': 'srfszzb.jpg',
+                    'image': '115febe3051840909d08205f720b23a4.jpg',
                     'user_id': admin_user.id
                 },
                 {
@@ -224,7 +229,7 @@ def init_database():
                     'cook_time': 15,
                     'difficulty': '中等',
                     'servings': 3,
-                    'image': 'tcjl.jpg',
+                    'image': '93dd19494ba44895a1d5772d05024c27.jpg',
                     'user_id': chef_user.id
                 },
                 {
@@ -236,8 +241,68 @@ def init_database():
                     'cook_time': 8,
                     'difficulty': '简单',
                     'servings': 3,
-                    'image': 'srzx.jpg',
+                    'image': 'srxlh.jpg',
                     'user_id': admin_user.id
+                },
+                {
+                    'title': '鱼香肉丝',
+                    'description': '经典川菜，酸甜微辣，肉丝嫩滑',
+                    'ingredients': '猪里脊肉 250g\n木耳 50g\n胡萝卜 1根\n青椒 1个\n葱姜蒜 适量\n豆瓣酱 1勺\n醋 2勺\n糖 1勺\n生抽 1勺\n料酒 1勺\n淀粉 适量',
+                    'instructions': '1. 猪里脊肉切丝，用料酒、盐、淀粉抓匀腌制\n2. 木耳泡发切丝，胡萝卜、青椒切丝\n3. 葱姜蒜切末\n4. 调制鱼香汁：醋、糖、生抽、淀粉、清水混合\n5. 热锅放油，下肉丝滑炒变色盛出\n6. 锅中留油，下豆瓣酱炒出红油\n7. 下葱姜蒜末、木耳、胡萝卜、青椒翻炒\n8. 倒入肉丝，淋入鱼香汁\n9. 大火翻炒均匀即可出锅',
+                    'prep_time': 15,
+                    'cook_time': 10,
+                    'difficulty': '中等',
+                    'servings': 3,
+                    'image': 'hsr.jpg',
+                    'user_id': chef_user.id
+                },
+                {
+                    'title': '麻婆豆腐',
+                    'description': '经典川菜，麻辣鲜香，豆腐嫩滑',
+                    'ingredients': '嫩豆腐 1块\n猪肉末 100g\n豆瓣酱 1勺\n花椒粉 1勺\n辣椒粉 1勺\n葱姜蒜 适量\n生抽 1勺\n料酒 1勺\n淀粉 适量\n小葱 适量',
+                    'instructions': '1. 嫩豆腐切块，用盐水浸泡\n2. 热锅放油，下肉末炒散变色\n3. 加入豆瓣酱炒出红油\n4. 下葱姜蒜末、辣椒粉炒香\n5. 加入适量清水或高汤\n6. 下豆腐块，轻轻推动\n7. 加生抽调味，小火煮3分钟\n8. 淋入水淀粉勾芡\n9. 撒上花椒粉和葱花即可',
+                    'prep_time': 10,
+                    'cook_time': 12,
+                    'difficulty': '简单',
+                    'servings': 3,
+                    'image': 'xhscjd.jpg',
+                    'user_id': admin_user.id
+                },
+                {
+                    'title': '水煮牛肉',
+                    'description': '麻辣鲜香，牛肉嫩滑，川菜经典',
+                    'ingredients': '牛里脊肉 300g\n豆芽 200g\n生菜 100g\n豆瓣酱 2勺\n干辣椒 10个\n花椒 1勺\n葱姜蒜 适量\n生抽 1勺\n料酒 1勺\n淀粉 适量\n蛋清 1个',
+                    'instructions': '1. 牛肉切薄片，用料酒、生抽、蛋清、淀粉抓匀腌制\n2. 豆芽、生菜洗净焯水，铺在碗底\n3. 热锅放油，下豆瓣酱炒出红油\n4. 加入适量清水或高汤烧开\n5. 下牛肉片滑熟，连汤倒入碗中\n6. 撒上干辣椒段、花椒、蒜末\n7. 另起锅烧热油，浇在牛肉上\n8. 撒上葱花即可',
+                    'prep_time': 20,
+                    'cook_time': 15,
+                    'difficulty': '中等',
+                    'servings': 3,
+                    'image': '418b20a3838e4ae8a5808ceba994a87e.jpg',
+                    'user_id': chef_user.id
+                },
+                {
+                    'title': '干锅花菜',
+                    'description': '香辣下饭，花菜脆嫩，家常美味',
+                    'ingredients': '花菜 1个\n五花肉 100g\n干辣椒 5个\n葱姜蒜 适量\n豆瓣酱 1勺\n生抽 1勺\n盐 适量\n食用油 适量',
+                    'instructions': '1. 花菜洗净切小朵，五花肉切片\n2. 干辣椒剪段，葱姜蒜切末\n3. 热锅放油，下五花肉煸炒出油\n4. 下葱姜蒜末、干辣椒段炒香\n5. 加入豆瓣酱炒出红油\n6. 下花菜大火翻炒\n7. 加生抽、盐调味\n8. 炒至花菜断生即可出锅',
+                    'prep_time': 10,
+                    'cook_time': 10,
+                    'difficulty': '简单',
+                    'servings': 3,
+                    'image': '115febe3051840909d08205f720b23a4.jpg',
+                    'user_id': admin_user.id
+                },
+                {
+                    'title': '回锅肉',
+                    'description': '川菜之首，肥而不腻，香辣下饭',
+                    'ingredients': '五花肉 300g\n青蒜 100g\n青椒 1个\n红椒 1个\n豆瓣酱 1勺\n甜面酱 1勺\n葱姜 适量\n料酒 1勺\n生抽 1勺\n糖 少许',
+                    'instructions': '1. 五花肉冷水下锅，加葱姜、料酒煮20分钟\n2. 捞出晾凉切薄片\n3. 青蒜、青红椒切段\n4. 热锅放少许油，下五花肉片煸炒\n5. 炒至肉片卷曲出油，盛出\n6. 锅中留油，下豆瓣酱、甜面酱炒香\n7. 下青蒜、青红椒翻炒\n8. 倒入肉片，加生抽、糖调味\n9. 翻炒均匀即可出锅',
+                    'prep_time': 15,
+                    'cook_time': 15,
+                    'difficulty': '中等',
+                    'servings': 3,
+                    'image': '93dd19494ba44895a1d5772d05024c27.jpg',
+                    'user_id': chef_user.id
                 }
             ]
             
@@ -251,8 +316,8 @@ def init_database():
             db.session.commit()
             
             # 获取菜谱对象以便后续使用
-            recipe1, recipe2, recipe3, recipe4, recipe5, recipe6, recipe7, recipe8 = recipe_objects
-            
+            recipe1, recipe2, recipe3, recipe4, recipe5, recipe6, recipe7, recipe8, recipe9, recipe10, recipe11, recipe12, recipe13, recipe14, recipe15, recipe16, recipe17, recipe18, recipe19 = recipe_objects
+
             # 5. 创建点赞
             print("❤️ 创建点赞...")
             likes = [
@@ -267,7 +332,12 @@ def init_database():
                 Like(user_id=admin_user.id, recipe_id=recipe6.id),
                 Like(user_id=normal_user.id, recipe_id=recipe8.id),
                 Like(user_id=chef_user.id, recipe_id=recipe8.id),
-                Like(user_id=admin_user.id, recipe_id=recipe7.id)
+                Like(user_id=admin_user.id, recipe_id=recipe7.id),
+                Like(user_id=normal_user.id, recipe_id=recipe9.id),
+                Like(user_id=chef_user.id, recipe_id=recipe10.id),
+                Like(user_id=admin_user.id, recipe_id=recipe11.id),
+                Like(user_id=normal_user.id, recipe_id=recipe12.id),
+                Like(user_id=chef_user.id, recipe_id=recipe13.id)
             ]
             db.session.add_all(likes)
             db.session.commit()
@@ -282,7 +352,11 @@ def init_database():
                 Favorite(user_id=chef_user.id, recipe_id=recipe2.id),
                 Favorite(user_id=chef_user.id, recipe_id=recipe8.id),
                 Favorite(user_id=admin_user.id, recipe_id=recipe5.id),
-                Favorite(user_id=normal_user.id, recipe_id=recipe8.id)
+                Favorite(user_id=normal_user.id, recipe_id=recipe8.id),
+                Favorite(user_id=normal_user.id, recipe_id=recipe9.id),
+                Favorite(user_id=chef_user.id, recipe_id=recipe10.id),
+                Favorite(user_id=admin_user.id, recipe_id=recipe11.id),
+                Favorite(user_id=normal_user.id, recipe_id=recipe13.id)
             ]
             db.session.add_all(favorites)
             db.session.commit()
@@ -299,7 +373,12 @@ def init_database():
                 Comment(content='这道菜的味道太棒了！糊辣荔枝味很正宗！', user_id=normal_user.id, recipe_id=recipe4.id),
                 Comment(content='花生很脆，鸡丁很嫩，完美！', user_id=admin_user.id, recipe_id=recipe4.id),
                 Comment(content='麻辣鲜香，太下饭了！', user_id=normal_user.id, recipe_id=recipe5.id),
-                Comment(content='我家孩子超爱吃这个！', user_id=chef_user.id, recipe_id=recipe8.id)
+                Comment(content='我家孩子超爱吃这个！', user_id=chef_user.id, recipe_id=recipe8.id),
+                Comment(content='鱼香肉丝太经典了，酸甜微辣刚刚好！', user_id=normal_user.id, recipe_id=recipe9.id),
+                Comment(content='麻婆豆腐麻辣鲜香，超级下饭！', user_id=chef_user.id, recipe_id=recipe10.id),
+                Comment(content='水煮牛肉太嫩了，麻辣过瘾！', user_id=admin_user.id, recipe_id=recipe11.id),
+                Comment(content='干锅花菜简单又好吃，家常必备！', user_id=normal_user.id, recipe_id=recipe12.id),
+                Comment(content='回锅肉真的是川菜之首，太香了！', user_id=chef_user.id, recipe_id=recipe13.id)
             ]
             db.session.add_all(comments)
             db.session.commit()
@@ -331,6 +410,16 @@ def init_database():
                 Rating(score=4, user_id=admin_user.id, recipe_id=recipe6.id),
                 Rating(score=5, user_id=chef_user.id, recipe_id=recipe8.id),
                 Rating(score=5, user_id=admin_user.id, recipe_id=recipe7.id),
+                Rating(score=5, user_id=normal_user.id, recipe_id=recipe9.id),
+                Rating(score=4, user_id=chef_user.id, recipe_id=recipe9.id),
+                Rating(score=5, user_id=admin_user.id, recipe_id=recipe10.id),
+                Rating(score=5, user_id=normal_user.id, recipe_id=recipe10.id),
+                Rating(score=5, user_id=chef_user.id, recipe_id=recipe11.id),
+                Rating(score=4, user_id=admin_user.id, recipe_id=recipe11.id),
+                Rating(score=4, user_id=normal_user.id, recipe_id=recipe12.id),
+                Rating(score=5, user_id=chef_user.id, recipe_id=recipe12.id),
+                Rating(score=5, user_id=admin_user.id, recipe_id=recipe13.id),
+                Rating(score=5, user_id=normal_user.id, recipe_id=recipe13.id),
             ]
             db.session.add_all(ratings)
             db.session.commit()
