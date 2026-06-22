@@ -1,11 +1,11 @@
-<template>
+﻿<template>
   <div class="admin-layout">
     <el-container>
       <!-- 侧边栏 -->
       <el-aside width="260px" class="admin-sidebar">
         <div class="sidebar-header">
           <div class="logo-wrapper">
-            <el-icon class="logo-icon"><ChefHat /></el-icon>
+            <el-icon class="logo-icon"><Food /></el-icon>
             <h2>美食管理</h2>
           </div>
         </div>
@@ -57,7 +57,7 @@
           <div class="header-left">
             <el-breadcrumb separator=">">
               <el-breadcrumb-item :to="{ path: '/admin/dashboard' }">
-                <el-icon><Home /></el-icon>
+                <el-icon><HomeFilled /></el-icon>
                 <span>管理后台</span>
               </el-breadcrumb-item>
               <el-breadcrumb-item>{{ getCurrentPageTitle() }}</el-breadcrumb-item>
@@ -79,7 +79,7 @@
                   <span class="username">{{ currentUser?.username }}</span>
                   <span class="user-role">管理员</span>
                 </div>
-                <el-icon class="arrow-icon"><ChevronDown /></el-icon>
+                <el-icon class="arrow-icon"><CaretBottom /></el-icon>
               </div>
               <template #dropdown>
                 <el-dropdown-menu>
@@ -93,7 +93,7 @@
                   </el-dropdown-item>
                   <el-dropdown-divider />
                   <el-dropdown-item command="logout">
-                    <el-icon><LogOut /></el-icon>
+                    <el-icon><TurnOff /></el-icon>
                     <span>退出登录</span>
                   </el-dropdown-item>
                 </el-dropdown-menu>
@@ -126,12 +126,11 @@ import {
   ChatDotRound,
   Collection,
   TrendCharts,
-  ChefHat,
-  Home,
+  HomeFilled,
   Bell,
-  ChevronDown,
+  CaretBottom,
   Setting,
-  LogOut
+  TurnOff
 } from '@element-plus/icons-vue'
 import { authApi, type User as UserType } from '@/api/auth'
 

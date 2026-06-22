@@ -3,6 +3,34 @@ import { authApi } from './auth'
 
 const API_BASE_URL = 'http://localhost:5000/api'
 
+// 管理员相关类型定义
+export interface AdminUser {
+  id: number
+  username: string
+  email: string
+  bio?: string
+  avatar?: string
+  created_at: string
+  is_admin: boolean
+}
+
+export interface UsersListResponse {
+  users: AdminUser[]
+  total: number
+  current_page: number
+  per_page: number
+}
+
+export interface DashboardResponse {
+  user_count: number
+  recipe_count: number
+  comment_count: number
+  favorite_count: number
+  like_count: number
+  new_users_today?: number
+  new_recipes_today?: number
+}
+
 // 创建axios实例
 const adminAxios = axios.create({
   baseURL: API_BASE_URL,
@@ -44,7 +72,7 @@ adminAxios.interceptors.response.use(
 export const adminApi = {
   // ============= 用户管理 API =============
   // 获取用户列表
-  getUsers: (params?: any) => {
+  getUsers: (params?: any): Promise<UsersListResponse> => {
     return adminAxios.get('/admin/users', { params })
   },
 
@@ -96,7 +124,7 @@ export const adminApi = {
   },
 
   // 获取仪表板数据
-  getDashboard: () => {
+  getDashboard: (): Promise<DashboardResponse> => {
     return adminAxios.get('/admin/dashboard')
   }
 }

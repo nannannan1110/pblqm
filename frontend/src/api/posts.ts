@@ -30,8 +30,15 @@ export interface Post {
   }
 }
 
+export interface PostsResponse {
+  posts: Post[]
+  total: number
+  page: number
+  per_page: number
+}
+
 // 获取帖子列表
-export const getPosts = (page = 1, perPage = 10) => {
+export const getPosts = (page = 1, perPage = 10): Promise<PostsResponse> => {
   return api.get('/posts', { params: { page, per_page: perPage } })
 }
 

@@ -48,7 +48,7 @@
                   @click="toggleFavorite"
                   class="animate-btn"
                 >
-                  <el-icon><HeartFilled v-if="isFavorite" /><Heart v-else /></el-icon>
+                  <el-icon><StarFilled v-if="isFavorite" /><Star v-else /></el-icon>
                   {{ isFavorite ? '已收藏' : '收藏菜谱' }}
                 </el-button>
                 <el-button v-if="canEdit" type="primary" @click="editRecipe">
@@ -126,12 +126,12 @@
               <div class="comments-stats">
                 <span class="rating-display">
                   <el-rate
-                    v-model="commentStats.average_rating"
+                    v-model="commentStats.average_score"
                     disabled
                     show-score
                     text-color="#ff9900"
                   />
-                  <span class="comment-count">({{ commentStats.total_comments }}条评价)</span>
+                  <span class="comment-count">({{ commentStats.comment_count }}条评价)</span>
                 </span>
               </div>
             </div>
@@ -142,7 +142,7 @@
             <div v-for="(count, rating) in commentStats.rating_distribution" :key="rating" class="rating-item">
               <span class="rating-label">{{ rating }}星</span>
               <el-progress
-                :percentage="commentStats.total_comments ? (count / commentStats.total_comments * 100) : 0"
+                :percentage="commentStats.comment_count ? (count / commentStats.comment_count * 100) : 0"
                 :show-text="false"
                 :stroke-width="8"
               />
@@ -246,8 +246,7 @@ import {
   ChatLineSquare,
   Edit,
   Delete,
-  Heart,
-  HeartFilled
+  StarFilled
 } from '@element-plus/icons-vue'
 import { recipeApi, type Recipe } from '@/api/recipes'
 import { commentApi, type Comment, type CommentStats } from '@/api/comments'
@@ -262,8 +261,9 @@ const store = useStore()
 const recipe = ref<Recipe | null>(null)
 const comments = ref<Comment[]>([])
 const commentStats = ref<CommentStats>({
-  total_comments: 0,
-  average_rating: 0,
+  comment_count: 0,
+  rating_count: 0,
+  average_score: 0,
   rating_distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
 })
 
@@ -385,15 +385,22 @@ const isFavorite = computed(() => {
 })
 
 // 切换收藏状态
-const toggleFavorite = () => {
+const toggleFavorite = async () => {
   if (!recipe.value) return
-  
-  store.commit('TOGGLE_FAVORITE', recipe.value)
-  
-  if (isFavorite.value) {
-    ElMessage.success('已收藏')
-  } else {
-    ElMessage.success('已取消收藏')
+
+  try {
+    if (isFavorite.value) {
+      await recipeApi.removeFavorite(recipe.value.id)
+      store.commit('TOGGLE_FAVORITE', recipe.value)
+      ElMessage.success('已取消收藏')
+    } else {
+      await recipeApi.toggleFavorite(recipe.value.id)
+      store.commit('TOGGLE_FAVORITE', recipe.value)
+      ElMessage.success('收藏成功')
+    }
+  } catch (error: any) {
+    console.error('收藏操作失败:', error)
+    ElMessage.error('收藏操作失败')
   }
 }
 
@@ -422,7 +429,8 @@ const fetchRecipe = async () => {
   try {
     loading.value = true
     const recipeId = Number(route.params.id)
-    recipe.value = await recipeApi.getRecipe(recipeId)
+    const response = await recipeApi.getRecipe(recipeId) as any
+    recipe.value = response
     
     // 添加到浏览历史
     if (recipe.value) {
@@ -450,7 +458,7 @@ const fetchCommentStats = async () => {
 
   try {
     console.log(`开始获取菜谱 ${recipe.value.id} 的评论统计...`)
-    const stats = await commentApi.getRecipeCommentStats(recipe.value.id)
+    const stats = await commentApi.getRecipeCommentStats(recipe.value.id) as any
     console.log('评论统计返回:', stats)
     commentStats.value = stats
   } catch (error) {
@@ -470,7 +478,7 @@ const fetchComments = async () => {
     const response = await commentApi.getRecipeComments(recipe.value.id, {
       page: pagination.value.currentPage,
       per_page: pagination.value.pageSize
-    })
+    }) as any
 
     console.log('评论API返回:', response)
     console.log('评论数量:', response.comments?.length || 0)
@@ -495,10 +503,9 @@ const submitComment = async () => {
   try {
     submittingComment.value = true
 
-    await commentApi.createComment({
+    await commentApi.createComment(recipe.value.id, {
       content: newComment.value.content,
-      rating: newComment.value.rating,
-      recipe_id: recipe.value.id
+      rating: newComment.value.rating
     })
 
     ElMessage.success('评价发表成功')

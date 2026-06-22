@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="edit-recipe" v-loading="loading">
     <el-card class="edit-card" v-if="recipeForm">
       <template #header>

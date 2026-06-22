@@ -4,7 +4,7 @@
     <div class="page-header animate-fade-in-up">
       <div class="header-content">
         <div class="header-icon">
-          <el-icon><HeartFilled /></el-icon>
+          <el-icon><StarFilled /></el-icon>
         </div>
         <div class="header-text">
           <h1 class="page-title">我的收藏</h1>
@@ -35,7 +35,7 @@
       <!-- 空状态 -->
       <div v-else class="empty-state">
         <div class="empty-icon">
-          <el-icon><HeartFilled /></el-icon>
+          <el-icon><StarFilled /></el-icon>
         </div>
         <h3>还没有收藏任何菜谱</h3>
         <p>去浏览菜谱，收藏喜欢的美食吧</p>
@@ -51,10 +51,13 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useStore } from 'vuex'
 import { ElMessage } from 'element-plus'
-import { HeartFilled, Search } from '@element-plus/icons-vue'
+import { StarFilled, Search } from '@element-plus/icons-vue'
 import { recipeApi, type Recipe } from '@/api/recipes'
 import RecipeCard from '@/components/RecipeCard.vue'
+
+const store = useStore()
 
 const router = useRouter()
 const favorites = ref<Recipe[]>([])
@@ -71,8 +74,9 @@ const fetchFavorites = async () => {
 
 const toggleFavorite = async (recipe: Recipe) => {
   try {
-    await recipeApi.toggleFavorite(recipe.id)
+    await recipeApi.removeFavorite(recipe.id)
     favorites.value = favorites.value.filter(r => r.id !== recipe.id)
+    store.commit('TOGGLE_FAVORITE', recipe)
     ElMessage.success('已取消收藏')
   } catch (error: any) {
     console.error('取消收藏失败:', error)

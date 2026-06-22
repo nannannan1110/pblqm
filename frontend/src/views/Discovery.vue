@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="discovery-page">
     <div class="page-header">
       <h1>发现页</h1>

@@ -12,6 +12,8 @@ export interface Comment {
   updated_at?: string
   user?: User
   replies?: Comment[]
+  // 评分（可选）
+  rating?: number
 }
 
 // 评论列表响应类型

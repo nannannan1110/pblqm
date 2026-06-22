@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="my-recipes">
     <div class="page-header">
       <h2>我的菜谱</h2>

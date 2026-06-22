@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div id="app" :class="{ 'admin-page': isAdminPage, 'auth-page': isAuthPage, 'dark-mode': isDarkMode }">
     <!-- 导航栏（管理员页面和认证页面隐藏） -->
     <el-header v-if="!isAdminPage && !isAuthPage" class="app-header">
@@ -29,7 +29,7 @@
               <span>菜谱</span>
             </el-menu-item>
             <el-menu-item v-if="isLoggedIn" index="/favorites">
-              <el-icon><HeartFilled /></el-icon>
+              <el-icon><StarFilled /></el-icon>
               <span>我的收藏</span>
             </el-menu-item>
             <el-menu-item v-if="isLoggedIn" index="/history">
@@ -133,7 +133,7 @@ import {
   Setting,
   Sunny,
   Moon,
-  HeartFilled,
+  StarFilled,
   Clock,
   Compass
 } from '@element-plus/icons-vue'

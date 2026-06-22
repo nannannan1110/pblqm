@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="recipes">
     <div class="recipes-header animate-fade-in-up">
       <h1>菜谱列表</h1>

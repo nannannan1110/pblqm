@@ -36,8 +36,7 @@
     <div class="post-actions">
       <div class="action-item" @click="handleLike">
         <el-icon :color="isLiked ? '#409EFF' : '#999'" :size="20">
-          <Pointer v-if="isLiked" />
-          <Pointer v-else />
+          <StarFilled />
         </el-icon>
         <span>{{ post.likes_count }}</span>
       </div>
@@ -93,7 +92,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Pointer, ChatLineSquare, MoreFilled } from '@element-plus/icons-vue'
+import { StarFilled, ChatLineSquare, MoreFilled } from '@element-plus/icons-vue'
 import { getPostComments, addPostComment, deletePostComment, togglePostLike } from '@/api/posts'
 import { authApi } from '@/api/auth'
 
@@ -180,7 +179,7 @@ const formatTime = (time: string) => {
 const loadComments = async () => {
   try {
     const response = await getPostComments(props.post.id)
-    comments.value = response.data.comments || []
+    comments.value = response.comments || []
   } catch (error) {
     console.error('Failed to load comments:', error)
   }

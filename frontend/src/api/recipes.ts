@@ -15,6 +15,13 @@ export interface Recipe {
   user_id: number
   created_at: string
   updated_at?: string
+  // 统计信息（可选）
+  stats?: {
+    likes_count?: number
+    favorites_count?: number
+    comments_count?: number
+    avg_rating?: number
+  }
 }
 
 // 菜谱列表响应类型
@@ -141,6 +148,21 @@ export const recipeApi = {
     const url = queryString ? `/recipes/hot?${queryString}` : '/recipes/hot'
 
     return api.get<RecipesResponse>(url)
+  },
+
+  // 获取当前用户的收藏列表（简化版，用于判断收藏状态）
+  getFavorites() {
+    return api.get<RecipesResponse>('/recipes/favorites/my')
+  },
+
+  // 切换收藏状态
+  toggleFavorite(recipeId: number): Promise<{ message: string; favorites_count?: number }> {
+    return api.post(`/recipes/${recipeId}/favorite`)
+  },
+
+  // 取消收藏
+  removeFavorite(recipeId: number): Promise<{ message: string; favorites_count?: number }> {
+    return api.delete(`/recipes/${recipeId}/favorite`)
   }
 }
 

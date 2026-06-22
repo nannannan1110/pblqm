@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="admin-users">
     <!-- 页面头部 -->
     <div class="page-header">
@@ -23,7 +23,7 @@
     <el-row :gutter="16" class="stats-cards">
       <el-col :span="6">
         <div class="mini-stat-card">
-          <el-icon class="mini-stat-icon"><Users /></el-icon>
+          <el-icon class="mini-stat-icon"><User /></el-icon>
           <div>
             <p class="mini-stat-value">{{ totalUsers }}</p>
             <p class="mini-stat-label">总用户</p>
@@ -41,7 +41,7 @@
       </el-col>
       <el-col :span="6">
         <div class="mini-stat-card active-card">
-          <el-icon class="mini-stat-icon"><Activity /></el-icon>
+          <el-icon class="mini-stat-icon"><TrendCharts /></el-icon>
           <div>
             <p class="mini-stat-value">{{ activeUsers }}</p>
             <p class="mini-stat-label">活跃用户</p>
@@ -163,8 +163,10 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Users, UserFilled, Activity, Clock, User, Search, Plus } from '@element-plus/icons-vue'
+import { UserFilled, TrendCharts, Clock, User } from '@element-plus/icons-vue'
 import api from '@/api/index'
+import { adminApi } from '@/api/admin'
+
 
 const loading = ref(false)
 const users = ref([])
@@ -194,7 +196,7 @@ const fetchUsers = async (page = 1) => {
       params.search = searchQuery.value
     }
 
-    const data = await api.get('/admin/users', { params })
+    const data = await adminApi.getUsers(params)
 
     if (data) {
       users.value = data.users
@@ -240,7 +242,7 @@ const handleToggleAdmin = async (user: any) => {
   user._loading = true
 
   try {
-    const data = await api.put(`/admin/users/${user.id}/toggle-admin`)
+    const data = await api.put(`/admin/users/${user.id}/toggle-admin`) as any
 
     if (data) {
       ElMessage.success(data.message || '操作成功')
@@ -274,7 +276,7 @@ const handleDeactivateUser = async (user: any) => {
   user._loading = true
 
   try {
-    const data = await api.put(`/admin/users/${user.id}/deactivate`)
+    const data = await api.put(`/admin/users/${user.id}/deactivate`) as any
 
     if (data) {
       ElMessage.success(data.message || '注销成功')
@@ -294,7 +296,7 @@ const handleActivateUser = async (user: any) => {
   user._loading = true
 
   try {
-    const data = await api.put(`/admin/users/${user.id}/activate`)
+    const data = await api.put(`/admin/users/${user.id}/activate`) as any
 
     if (data) {
       ElMessage.success(data.message || '恢复成功')

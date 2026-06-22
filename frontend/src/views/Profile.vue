@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="profile">
     <!-- 个人信息卡片 -->
     <el-card class="profile-card">
@@ -40,7 +40,7 @@
         <el-col :span="8">
           <div class="stat-item recipes">
             <div class="stat-icon-wrapper">
-              <el-icon><BookOpen /></el-icon>
+              <el-icon><Document /></el-icon>
             </div>
             <div class="stat-content">
               <div class="stat-value">{{ stats.total_recipes }}</div>
@@ -51,7 +51,7 @@
         <el-col :span="8">
           <div class="stat-item likes">
             <div class="stat-icon-wrapper">
-              <el-icon><ThumbsUp /></el-icon>
+              <el-icon><Star /></el-icon>
             </div>
             <div class="stat-content">
               <div class="stat-value">{{ stats.total_likes }}</div>
@@ -62,7 +62,7 @@
         <el-col :span="8">
           <div class="stat-item favorites">
             <div class="stat-icon-wrapper">
-              <el-icon><HeartFilled /></el-icon>
+              <el-icon><StarFilled /></el-icon>
             </div>
             <div class="stat-content">
               <div class="stat-value">{{ stats.total_favorites }}</div>
@@ -128,7 +128,7 @@
               </div>
               <div class="recipe-actions">
                 <span class="action-btn" @click.stop="removeFavorite(recipe.id)">
-                  <el-icon><HeartFilled /></el-icon>
+                  <el-icon><StarFilled /></el-icon>
                   取消收藏
                 </span>
               </div>
@@ -188,7 +188,7 @@
                   {{ recipe.stats?.avg_rating || 0 }}
                 </span>
                 <span class="meta-item">
-                  <el-icon><ThumbsUp /></el-icon>
+                  <el-icon><Star /></el-icon>
                   {{ recipe.stats?.likes_count || 0 }}
                 </span>
               </div>
@@ -198,7 +198,7 @@
                   :class="{ 'favorited': isFavorite(recipe.id) }"
                   @click.stop="toggleFavorite(recipe)"
                 >
-                  <el-icon><HeartFilled v-if="isFavorite(recipe.id)" /><Heart v-else /></el-icon>
+                  <el-icon><StarFilled v-if="isFavorite(recipe.id)" /><Star v-else /></el-icon>
                   {{ isFavorite(recipe.id) ? '已收藏' : '收藏' }}
                 </span>
               </div>
@@ -227,12 +227,10 @@ import { useRouter } from 'vue-router'
 import { useStore } from 'vuex'
 import { ElMessage } from 'element-plus'
 import {
-  BookOpen,
-  ThumbsUp,
-  HeartFilled,
-  Heart,
-  Clock,
-  Star
+  Document,
+  Star,
+  StarFilled,
+  Clock
 } from '@element-plus/icons-vue'
 import { authApi, type User } from '@/api/auth'
 import { recipeApi, type Recipe, formatTime } from '@/api/recipes'
@@ -329,7 +327,7 @@ const loadUserProfile = async () => {
 // 获取用户统计数据
 const loadUserStats = async () => {
   try {
-    const response = await recipeApi.getRecipes({ page: 1, per_page: 1000 })
+    const response = await recipeApi.getRecipes({ page: 1, per_page: 1000 }) as any
     const allRecipes = response.recipes || []
     const userRecipes = allRecipes.filter((recipe: any) => recipe.user_id === user.value?.id)
 
@@ -348,7 +346,7 @@ const loadFavorites = async (page: number = favoritesPage.value) => {
   favoritesPage.value = page
   favoritesLoading.value = true
   try {
-    const response = await recipeApi.getMyFavorites(page, pageSize.value)
+    const response = await recipeApi.getMyFavorites(page, pageSize.value) as any
     favorites.value = response.recipes || []
     favoritesTotal.value = response.total || 0
   } catch (error: any) {
@@ -364,7 +362,7 @@ const loadHotRecipes = async (page: number = hotPage.value) => {
   hotPage.value = page
   hotLoading.value = true
   try {
-    const response = await recipeApi.getHotRecipes(page, pageSize.value)
+    const response = await recipeApi.getHotRecipes(page, pageSize.value) as any
     hotRecipes.value = response.recipes || []
     hotTotal.value = response.total || 0
   } catch (error: any) {

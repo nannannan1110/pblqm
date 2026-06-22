@@ -58,7 +58,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Clock, Delete, Search, HeartFilled } from '@element-plus/icons-vue'
+import { Clock, Delete, Search, StarFilled } from '@element-plus/icons-vue'
 import { recipeApi, type Recipe } from '@/api/recipes'
 import RecipeCard from '@/components/RecipeCard.vue'
 
@@ -66,13 +66,14 @@ const router = useRouter()
 const history = ref<Recipe[]>([])
 const favorites = ref<number[]>([])
 
-const STORAGE_KEY = 'recipe_browse_history'
+const STORAGE_KEY = 'viewHistory'
 
 const loadHistory = () => {
   try {
     const stored = localStorage.getItem(STORAGE_KEY)
     if (stored) {
-      const historyIds = JSON.parse(stored)
+      const historyItems = JSON.parse(stored)
+      const historyIds = historyItems.map((item: any) => item.id)
       fetchRecipes(historyIds)
     }
   } catch (error) {
@@ -112,11 +113,13 @@ const isFavorite = (recipe: Recipe) => {
 
 const toggleFavorite = async (recipe: Recipe) => {
   try {
-    await recipeApi.toggleFavorite(recipe.id)
-    if (favorites.value.includes(recipe.id)) {
+    const isFavorited = favorites.value.includes(recipe.id)
+    if (isFavorited) {
+      await recipeApi.removeFavorite(recipe.id)
       favorites.value = favorites.value.filter(id => id !== recipe.id)
       ElMessage.success('已取消收藏')
     } else {
+      await recipeApi.toggleFavorite(recipe.id)
       favorites.value.push(recipe.id)
       ElMessage.success('收藏成功')
     }

@@ -6,7 +6,8 @@
 
 import os
 import sys
-from app import create_app, db
+from app import create_app
+from models import db
 from app.models.user import User
 from app.models.recipe import Recipe
 

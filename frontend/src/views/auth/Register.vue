@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="register-container">
     <el-card class="register-card">
       <template #header>

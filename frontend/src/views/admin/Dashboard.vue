@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="admin-dashboard">
     <!-- 页面头部 -->
     <div class="page-header">
@@ -27,7 +27,7 @@
               <p class="stat-label">总用户数</p>
               <h3 class="stat-value">{{ statistics.user_count }}</h3>
               <p class="stat-trend positive">
-                <el-icon><TrendUp /></el-icon>
+                <el-icon><TrendCharts /></el-icon>
                 <span>+12%</span>
                 <span class="trend-label">较上月</span>
               </p>
@@ -45,7 +45,7 @@
               <p class="stat-label">菜谱数量</p>
               <h3 class="stat-value">{{ statistics.recipe_count }}</h3>
               <p class="stat-trend positive">
-                <el-icon><TrendUp /></el-icon>
+                <el-icon><TrendCharts /></el-icon>
                 <span>+8%</span>
                 <span class="trend-label">较上月</span>
               </p>
@@ -63,7 +63,7 @@
               <p class="stat-label">评论数量</p>
               <h3 class="stat-value">{{ statistics.comment_count }}</h3>
               <p class="stat-trend positive">
-                <el-icon><TrendUp /></el-icon>
+                <el-icon><TrendCharts /></el-icon>
                 <span>+15%</span>
                 <span class="trend-label">较上月</span>
               </p>
@@ -81,7 +81,7 @@
               <p class="stat-label">收藏数量</p>
               <h3 class="stat-value">{{ statistics.favorite_count }}</h3>
               <p class="stat-trend positive">
-                <el-icon><TrendUp /></el-icon>
+                <el-icon><TrendCharts /></el-icon>
                 <span>+22%</span>
                 <span class="trend-label">较上月</span>
               </p>
@@ -96,7 +96,7 @@
       <el-col :span="12">
         <el-card class="quick-action-card">
           <h3 class="section-title">
-            <el-icon><BarChart /></el-icon>
+            <el-icon><Histogram /></el-icon>
             <span>最近活动</span>
           </h3>
           <div class="activity-list">
@@ -130,7 +130,7 @@
       <el-col :span="12">
         <el-card class="quick-action-card">
           <h3 class="section-title">
-            <el-icon><Zap /></el-icon>
+            <el-icon><Lightning /></el-icon>
             <span>快捷操作</span>
           </h3>
           <div class="quick-actions-grid">
@@ -161,15 +161,13 @@ import {
   Food, 
   ChatDotRound, 
   Star, 
-  TrendUp,
-  BarChart,
-  Zap,
-  UserPlus,
-  Plus,
-  Refresh
+  TrendCharts,
+  Histogram,
+  Lightning
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import api from '@/api/index'
+import { adminApi } from '@/api/admin'
+
 
 const router = useRouter()
 const loading = ref(false)
@@ -185,7 +183,7 @@ const statistics = ref({
 const fetchStatistics = async () => {
   loading.value = true
   try {
-    const data = await api.get('/admin/statistics')
+    const data = await adminApi.getDashboard() as any
     if (data) {
       statistics.value = data
     }

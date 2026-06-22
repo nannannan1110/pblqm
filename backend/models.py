@@ -131,6 +131,9 @@ class Favorite(db.Model):
         db.UniqueConstraint('user_id', 'recipe_id', name='_user_recipe_favorite'),
     )
 
+    # 关系
+    recipe = db.relationship('Recipe', backref='favorites', lazy=True)
+
 
 class Rating(db.Model):
     """评分表"""

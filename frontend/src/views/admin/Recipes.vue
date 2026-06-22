@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="admin-recipes">
     <div class="page-header">
       <h2>菜谱管理</h2>

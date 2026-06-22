@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="recipe-card" @click="handleClick">
     <div class="card-image-wrapper">
       <img :src="imageUrl" :alt="recipe.title" class="card-image" />
@@ -16,7 +16,7 @@
         :class="{ active: isFavorite }"
         @click.stop="handleToggleFavorite"
       >
-        <el-icon><HeartFilled v-if="isFavorite" /><Heart v-else /></el-icon>
+        <el-icon><StarFilled v-if="isFavorite" /><Collection v-else /></el-icon>
       </button>
     </div>
     <div class="card-content">
@@ -38,7 +38,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { View, HeartFilled, Heart, Timer, User } from '@element-plus/icons-vue'
+import { View, StarFilled, Collection, Timer, User } from '@element-plus/icons-vue'
 
 interface Props {
   recipe: any

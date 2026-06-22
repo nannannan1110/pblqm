@@ -70,8 +70,8 @@ api.interceptors.response.use(
           ElMessage.error('服务器内部错误')
           break
         default:
-          // 安全地获取错误消息
-          const errorMsg = (data && data.message) || `请求失败 (${status})`
+          // 安全地获取错误消息（支持 message 和 error 两种格式）
+          const errorMsg = (data && (data.message || data.error)) || `请求失败 (${status})`
           ElMessage.error(errorMsg)
       }
     } else if (error.request) {

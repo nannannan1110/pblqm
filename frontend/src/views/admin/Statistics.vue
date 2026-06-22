@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="admin-statistics">
     <div class="page-header">
       <h2>数据统计</h2>

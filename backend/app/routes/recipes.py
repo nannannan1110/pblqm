@@ -215,7 +215,7 @@ def update_recipe(recipe_id):
         recipe.image = data['image']
 
     db.session.commit()
-    return jsonify(recipe.to_dict(current_user_id=user_id))
+    return jsonify(recipe.to_dict())
 
 @recipes_bp.route('/<int:recipe_id>', methods=['DELETE'])
 @jwt_required()
@@ -341,7 +341,7 @@ def get_my_favorites():
     recipes = [fav.recipe for fav in favorites.items]
 
     return jsonify({
-        'recipes': [recipe.to_dict(current_user_id=user_id) for recipe in recipes],
+        'recipes': [recipe.to_dict() for recipe in recipes],
         'total': favorites.total,
         'pages': favorites.pages,
         'current_page': page
@@ -417,7 +417,7 @@ def get_recipe_comments(recipe_id):
     Recipe.query.get_or_404(recipe_id)
 
     # 分页查询评论
-    comments = Comment.query.filter_by(recipe_id=recipe_id, parent_id=None)\
+    comments = Comment.query.filter_by(recipe_id=recipe_id)\
         .order_by(Comment.created_at.desc())\
         .paginate(page=page, per_page=per_page, error_out=False)
 

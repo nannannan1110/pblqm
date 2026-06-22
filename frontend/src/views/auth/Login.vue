@@ -202,24 +202,33 @@ const handleLogin = async () => {
 
     if (loginType.value === 'user' && response.user.is_admin) {
       // 管理员在用户登录界面登录，给予友好提示
-      const confirmed = await ElMessageBox.confirm(
-        '检测到您是管理员账号，是否跳转到管理后台？',
-        '登录确认',
-        {
-          confirmButtonText: '跳转管理后台',
-          cancelButtonText: '继续使用用户端',
-          type: 'info'
-        }
-      ).catch(() => false)
-
-      if (confirmed) {
-        // 跳转到管理后台
+      try {
+        await ElMessageBox.confirm(
+          '检测到您是管理员账号，是否跳转到管理后台？',
+          '登录确认',
+          {
+            confirmButtonText: '跳转管理后台',
+            cancelButtonText: '继续使用用户端',
+            type: 'info'
+          }
+        )
+        // 用户选择跳转管理后台
         authApi.saveUserInfo(response.access_token, response.user)
         ElMessage.success({
           message: '登录成功！欢迎管理员',
           duration: 1500
         })
         router.push('/admin/dashboard')
+        return
+      } catch {
+        // 用户选择继续使用用户端，正常跳转到首页
+        authApi.saveUserInfo(response.access_token, response.user)
+        ElMessage.success({
+          message: '登录成功！欢迎回来',
+          duration: 1500
+        })
+        const redirect = route.query.redirect as string
+        router.push(redirect || '/home')
         return
       }
     }

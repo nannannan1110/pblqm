@@ -312,7 +312,7 @@
       <div v-if="!hasActiveFilters && !hasSearchQuery && favorites.length > 0" class="section favorite-section animate-fade-in-up">
         <div class="section-header">
           <h2 class="section-title">
-            <el-icon><HeartFilled /></el-icon>
+            <el-icon><StarFilled /></el-icon>
             我的收藏
             <span class="section-desc">收藏的菜谱</span>
           </h2>
@@ -376,10 +376,11 @@ import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import {
-  Search, Sunny, Moon, Food, TrendCharts, Timer, Star, Clock, HeartFilled,
-  List, Heart, RefreshRight, Filter, Loading, ArrowRight
+  Search, Sunny, Moon, Food, TrendCharts, Timer, Star, Clock, StarFilled,
+  List, RefreshRight, Filter, Loading, ArrowRight
 } from '@element-plus/icons-vue'
 import { recipeApi, type Recipe } from '@/api/recipes'
+import { authApi } from '@/api/auth'
 import RecipeCard from '@/components/RecipeCard.vue'
 
 const store = useStore()
@@ -584,9 +585,27 @@ const isFavorite = (recipe: Recipe) => {
   return store.state.favorites.some(f => f.id === recipe.id)
 }
 
-const toggleFavorite = (recipe: Recipe) => {
-  store.commit('TOGGLE_FAVORITE', recipe)
-  ElMessage.success(isFavorite(recipe) ? '已收藏' : '已取消收藏')
+const toggleFavorite = async (recipe: Recipe) => {
+  try {
+    if (isFavorite(recipe)) {
+      await recipeApi.removeFavorite(recipe.id)
+      store.commit('TOGGLE_FAVORITE', recipe)
+      ElMessage.success('已取消收藏')
+    } else {
+      await recipeApi.toggleFavorite(recipe.id)
+      store.commit('TOGGLE_FAVORITE', recipe)
+      ElMessage.success('收藏成功')
+    }
+  } catch (error: any) {
+    console.error('收藏操作失败:', error)
+    // 如果未登录，仍然允许本地收藏
+    if (!authApi.isLoggedIn()) {
+      store.commit('TOGGLE_FAVORITE', recipe)
+      ElMessage.success(isFavorite(recipe) ? '已收藏（本地）' : '已取消收藏（本地）')
+    } else {
+      ElMessage.error('收藏操作失败')
+    }
+  }
 }
 
 const viewRecipeDetail = (recipe: Recipe) => {

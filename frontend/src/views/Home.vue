@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="home">
     <div class="hero-section">
       <h1 class="animate-fade-in-up">菜谱分享系统</h1>
